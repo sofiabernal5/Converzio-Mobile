@@ -1,4 +1,4 @@
-// components/AboutModal.tsx
+// components/AboutModal.tsx (Temporary - No LinearGradient)
 import React from 'react';
 import {
   Modal,
@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 interface AboutModalProps {
   visible: boolean;
@@ -24,12 +22,8 @@ const AboutModal: React.FC<AboutModalProps> = ({ visible, onClose }) => {
       visible={visible}
       onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <SafeAreaView style={styles.modalContainer}>
-          <LinearGradient
-            colors={['#2a5298', '#1e3c72']}
-            style={styles.modalContent}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
             
             {/* Close button */}
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -73,17 +67,11 @@ const AboutModal: React.FC<AboutModalProps> = ({ visible, onClose }) => {
 
             {/* Got it button */}
             <TouchableOpacity style={styles.gotItButton} onPress={onClose}>
-              <LinearGradient
-                colors={['#4a90e2', '#357abd']}
-                style={styles.gotItGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}>
-                <Text style={styles.gotItButtonText}>Got it!</Text>
-              </LinearGradient>
+              <Text style={styles.gotItButtonText}>Got it!</Text>
             </TouchableOpacity>
 
-          </LinearGradient>
-        </SafeAreaView>
+          </View>
+        </View>
       </View>
     </Modal>
   );
@@ -92,7 +80,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -102,6 +90,7 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
   },
   modalContent: {
+    backgroundColor: '#2a5298',
     borderRadius: 20,
     padding: 25,
     shadowColor: '#000',
@@ -112,7 +101,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
-    flex: 1,
+    minHeight: 400,
   },
   closeButton: {
     position: 'absolute',
@@ -141,9 +130,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: 25,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   paragraph: {
     marginBottom: 20,
@@ -161,9 +147,7 @@ const styles = StyleSheet.create({
   gotItButton: {
     marginTop: 10,
     borderRadius: 25,
-    overflow: 'hidden',
-  },
-  gotItGradient: {
+    backgroundColor: '#4a90e2',
     paddingVertical: 12,
     paddingHorizontal: 30,
     alignItems: 'center',
