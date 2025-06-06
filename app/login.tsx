@@ -1,5 +1,5 @@
-// app/login.tsx (Login Screen)
-import React, { useState } from 'react';
+// app/login.tsx (Updated with Expo Google Auth)
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,24 +12,88 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
 import AnimatedBackground from '../components/AnimatedBackground';
 import { TextStyles } from '../constants/typography';
+
+// Complete the authentication session
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isGoogleSigninInProgress, setIsGoogleSigninInProgress] = useState(false);
 
-  const handleLogin = () => {
+  // Google OAuth configuration
+  const discovery = {
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://www.googleapis.com/oauth2/v4/token',
+    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+  };
+
+  const [request, response, promptAsync] = AuthSession.useAuthRequest(
+    {
+      clientId: '688365172283-h7e8uh28lufbsbg6k7svth125l93v5g9.apps.googleusercontent.com', // Replace with your WEB client ID (not iOS/Android)
+      scopes: ['openid', 'profile', 'email'],
+      redirectUri: AuthSession.makeRedirectUri(),
+    },
+    discovery
+  );
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      handleGoogleAuthSuccess(authentication);
+    }
+  }, [response]);
+
+  const handleGoogleAuthSuccess = async (authentication: any) => {
+    try {
+      // Get user info from Google
+      const userInfoResponse = await fetch(
+        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${authentication.accessToken}`
+      );
+      const userInfo = await userInfoResponse.json();
+      
+      console.log('Google User Info:', userInfo);
+      
+      Alert.alert(
+        'Success!', 
+        `Welcome ${userInfo.name}!`,
+        [{ text: 'OK', onPress: () => router.replace('home') }]
+      );
+    } catch (error) {
+      console.error('Failed to fetch user info:', error);
+      Alert.alert('Error', 'Failed to get user information');
+    } finally {
+      setIsGoogleSigninInProgress(false);
+    }
+  };
+
+  const handleEmailLogin = () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
     }
     
+    // Simple validation - in a real app, you'd authenticate with a server
     if (email.includes('@') && password.length >= 6) {
-      router.replace('home' as any);  // ← Add 'as any'
+      router.replace('home');
     } else {
       Alert.alert('Error', 'Invalid credentials');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleSigninInProgress(true);
+      await promptAsync();
+    } catch (error) {
+      console.error('Google Sign In Error:', error);
+      Alert.alert('Error', 'Something went wrong with Google sign in');
+      setIsGoogleSigninInProgress(false);
     }
   };
 
@@ -49,6 +113,30 @@ export default function LoginScreen() {
             <View style={styles.separator} />
             
             <View style={styles.formContainer}>
+              {/* Google Sign In Button */}
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogleSignIn}
+                disabled={isGoogleSigninInProgress || !request}>
+                <LinearGradient
+                  colors={['#4285f4', '#34a853']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <Text style={styles.googleButtonText}>
+                  {isGoogleSigninInProgress ? 'Signing in...' : '🔍 Continue with Google'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+              
+              {/* Email/Password Form */}
               <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -69,7 +157,7 @@ export default function LoginScreen() {
               />
               
               <TouchableOpacity
-                onPress={handleLogin}
+                onPress={handleEmailLogin}
                 style={styles.buttonContainer}>
                 <View style={styles.buttonWrapper}>
                   <LinearGradient
@@ -146,6 +234,43 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     alignItems: 'center',
+  },
+  googleButton: {
+    width: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  googleButtonText: {
+    ...TextStyles.button,
+    color: '#fff',
+    textAlign: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    width: '100%',
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  dividerText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: 15,
+    fontSize: 14,
   },
   input: {
     width: '100%',
