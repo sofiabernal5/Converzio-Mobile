@@ -1,4 +1,4 @@
-// app/login.tsx (Fixed Google OAuth Integration)
+// app/login.tsx (Cleaned up with separate SignUp component)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import AnimatedBackground from '../components/AnimatedBackground';
+import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
 
 // Complete the authentication session
@@ -24,8 +25,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isGoogleSigninInProgress, setIsGoogleSigninInProgress] = useState(false);
-  const [showLoginForm, setShowLoginForm] = useState(false); // Add this state
 
   // Google OAuth configuration
   const discovery = {
@@ -114,7 +115,7 @@ export default function LoginScreen() {
             text: 'Continue', 
             onPress: () => {
               // Navigate to home screen
-              router.replace('/(tabs)/home');
+              router.replace('/home');
             }
           }
         ]
@@ -135,7 +136,7 @@ export default function LoginScreen() {
     
     // Simple validation - in a real app, you'd authenticate with a server
     if (email.includes('@') && password.length >= 6) {
-      router.replace('/(tabs)/home');
+      router.replace('/home');
     } else {
       Alert.alert('Error', 'Invalid credentials. Please check your email and password.');
     }
@@ -166,6 +167,12 @@ export default function LoginScreen() {
     }
   };
 
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setEmail('');
+    setPassword('');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <AnimatedBackground />
@@ -175,78 +182,99 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.centerContent}>
           <View style={styles.contentWrapper}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Sign In</Text>
-              <Text style={styles.subtitle}>Access your professional branding tools</Text>
-            </View>
-            
-            <View style={styles.formContainer}>
-              {/* Google Sign In Button */}
-              <TouchableOpacity
-                style={[styles.googleButton, isGoogleSigninInProgress && styles.disabledButton]}
-                onPress={handleGoogleSignIn}
-                disabled={isGoogleSigninInProgress || !request}>
-                <LinearGradient
-                  colors={isGoogleSigninInProgress ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <Text style={styles.googleButtonText}>
-                  {isGoogleSigninInProgress ? 'Signing in...' : '🔍 Continue with Google'}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Divider */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-              
-              {/* Email/Password Form */}
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="rgba(255, 255, 255, 0.7)"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
+            {isSignUp ? (
+              <SignUpForm 
+                onToggleMode={toggleMode}
+                onGoogleSignIn={handleGoogleSignIn}
+                isGoogleSigninInProgress={isGoogleSigninInProgress}
               />
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="rgba(255, 255, 255, 0.7)"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              
-              <TouchableOpacity
-                onPress={handleEmailLogin}
-                style={styles.buttonContainer}>
-                <View style={styles.buttonWrapper}>
-                  <LinearGradient
-                    colors={['#4a90e2', '#357abd']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <Text style={styles.buttonText}>SIGN IN</Text>
+            ) : (
+              <>
+                <View style={styles.header}>
+                  <Text style={styles.title}>Sign In</Text>
+                  <Text style={styles.subtitle}>Access your professional branding tools</Text>
                 </View>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.back()}>
-                <Text style={styles.backButtonText}>← Back to Welcome</Text>
-              </TouchableOpacity>
-            </View>
+                
+                <View style={styles.formContainer}>
+                  {/* Google Sign In Button */}
+                  <TouchableOpacity
+                    style={[styles.googleButton, isGoogleSigninInProgress && styles.disabledButton]}
+                    onPress={handleGoogleSignIn}
+                    disabled={isGoogleSigninInProgress || !request}>
+                    <LinearGradient
+                      colors={isGoogleSigninInProgress ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={StyleSheet.absoluteFill}
+                    />
+                    <Text style={styles.googleButtonText}>
+                      {isGoogleSigninInProgress ? 'Signing in...' : 'Continue with Google'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Divider */}
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>or</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+                  
+                  {/* Email/Password Form */}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="rgba(255, 255, 255, 0.7)"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="rgba(255, 255, 255, 0.7)"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  
+                  <TouchableOpacity
+                    onPress={handleEmailLogin}
+                    style={styles.buttonContainer}>
+                    <View style={styles.buttonWrapper}>
+                      <LinearGradient
+                        colors={['#4a90e2', '#357abd']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                      <Text style={styles.buttonText}>SIGN IN</Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  {/* Small Sign Up text link */}
+                  <TouchableOpacity
+                    onPress={toggleMode}
+                    style={styles.smallSignUpButton}>
+                    <Text style={styles.smallSignUpText}>
+                      Don't have an account? Sign Up
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            
+            {/* Back to Welcome Button */}
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonText}>Back to Welcome</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -320,11 +348,12 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   googleButtonText: {
-    ...TextStyles.button,
     color: '#fff',
     textAlign: 'center',
     paddingVertical: 16,
     paddingHorizontal: 32,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -372,8 +401,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonText: {
-    ...TextStyles.button,
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
     textAlign: 'center',
   },
   backButton: {
@@ -384,5 +414,27 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     opacity: 0.8,
     fontSize: 14,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 16,
+  },
+  halfInput: {
+    width: '48%',
+    marginBottom: 0,
+  },
+  smallSignUpButton: {
+    marginTop: 12,
+    padding: 8,
+    alignItems: 'center',
+  },
+  smallSignUpText: {
+    color: '#ffffff',
+    fontSize: 14,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    opacity: 0.9,
   },
 });
