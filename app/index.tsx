@@ -1,5 +1,5 @@
-// app/index.tsx (Landing Screen)
-import React, { useEffect } from 'react';
+// app/index.tsx (Landing Screen - Fixed)
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -20,7 +20,7 @@ export default function LandingScreen() {
   const highlightAnim = new Animated.Value(0);
   const cardScale = new Animated.Value(1);
   const buttonScale = new Animated.Value(1);
-  const [showAboutModal, setShowAboutModal] = React.useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   useEffect(() => {
     // Continuous highlight animation
@@ -70,6 +70,11 @@ export default function LandingScreen() {
     }).start();
   };
 
+  const handleGetStarted = () => {
+    // Use push to maintain navigation stack so back button works
+    router.push('/login');
+  };
+
   const highlightOpacity = highlightAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0.8, 1],
@@ -106,7 +111,7 @@ export default function LandingScreen() {
             <TouchableOpacity
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
-              onPress={() => router.navigate('login')}
+              onPress={handleGetStarted}
               style={styles.buttonContainer}>
               <Animated.View
                 style={[

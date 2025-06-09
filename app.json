@@ -9,11 +9,12 @@
     "plugins": ["expo-router"],
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    // Remove or comment out splash configuration temporarily
+    // "splash": {
+    //   "image": "./assets/splash.png",
+    //   "resizeMode": "contain",
+    //   "backgroundColor": "#ffffff"
+    // },
     "assetBundlePatterns": [
       "**/*"
     ],
