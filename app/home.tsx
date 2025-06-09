@@ -253,6 +253,77 @@ export default function HomeScreen() {
             </View>
           </View>
         </ScrollView>
+
+        {/* Bottom Navigation Toolbar */}
+        <View style={styles.bottomToolbar}>
+          <TouchableOpacity 
+            style={styles.toolbarItem}
+            onPress={() => Alert.alert('Calendar', 'Calendar feature coming soon!')}
+          >
+            <View style={styles.toolbarIcon}>
+              <View style={styles.calendarIcon}>
+                <View style={styles.calendarHeader} />
+                <View style={styles.calendarBody}>
+                  <View style={styles.calendarDot} />
+                  <View style={styles.calendarDot} />
+                  <View style={styles.calendarDot} />
+                </View>
+              </View>
+            </View>
+            <Text style={styles.toolbarLabel}>Calendar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.toolbarItem}
+            onPress={() => Alert.alert('Video Library', 'Video library feature coming soon!')}
+          >
+            <View style={styles.toolbarIcon}>
+              <View style={styles.videoIcon}>
+                <View style={styles.playButton} />
+              </View>
+            </View>
+            <Text style={styles.toolbarLabel}>Videos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.toolbarItem}
+            onPress={() => Alert.alert('Inbox', 'Inbox feature coming soon!')}
+          >
+            <View style={styles.toolbarIcon}>
+              <View style={styles.inboxIcon}>
+                <View style={styles.envelopeFlap} />
+              </View>
+            </View>
+            <Text style={styles.toolbarLabel}>Inbox</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.toolbarItem}
+            onPress={() => Alert.alert('Performance', 'Performance metrics coming soon!')}
+          >
+            <View style={styles.toolbarIcon}>
+              <View style={styles.chartIcon}>
+                <View style={[styles.chartBar, { height: 8 }]} />
+                <View style={[styles.chartBar, { height: 12 }]} />
+                <View style={[styles.chartBar, { height: 6 }]} />
+              </View>
+            </View>
+            <Text style={styles.toolbarLabel}>Metrics</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.toolbarItem}
+            onPress={() => Alert.alert('Resources', 'Resource lounge coming soon!')}
+          >
+            <View style={styles.toolbarIcon}>
+              <View style={styles.resourceIcon}>
+                <View style={styles.bookSpine} />
+                <View style={[styles.bookSpine, { marginLeft: 2 }]} />
+              </View>
+            </View>
+            <Text style={styles.toolbarLabel}>Resources</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -520,5 +591,133 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     opacity: 0.8,
+  },
+  bottomToolbar: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+    paddingTop: 8,
+    paddingBottom: 20,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  toolbarItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  toolbarIcon: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  toolbarLabel: {
+    fontSize: 10,
+    color: '#6c757d',
+    fontWeight: '500',
+  },
+  // Calendar Icon
+  calendarIcon: {
+    width: 20,
+    height: 20,
+    backgroundColor: '#4a90e2',
+    borderRadius: 3,
+  },
+  calendarHeader: {
+    width: '100%',
+    height: 6,
+    backgroundColor: '#357abd',
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+  },
+  calendarBody: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 2,
+  },
+  calendarDot: {
+    width: 2,
+    height: 2,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+  },
+  // Video Icon
+  videoIcon: {
+    width: 20,
+    height: 16,
+    backgroundColor: '#4a90e2',
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playButton: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 0,
+    borderTopWidth: 4,
+    borderBottomWidth: 4,
+    borderLeftColor: '#fff',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    marginLeft: 2,
+  },
+  // Inbox Icon
+  inboxIcon: {
+    width: 20,
+    height: 14,
+    backgroundColor: '#4a90e2',
+    borderRadius: 2,
+    position: 'relative',
+  },
+  envelopeFlap: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#357abd',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  // Chart Icon
+  chartIcon: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    width: 18,
+    height: 16,
+  },
+  chartBar: {
+    width: 4,
+    backgroundColor: '#4a90e2',
+    borderRadius: 1,
+  },
+  // Resource Icon
+  resourceIcon: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    height: 18,
+  },
+  bookSpine: {
+    width: 8,
+    height: 18,
+    backgroundColor: '#4a90e2',
+    borderRadius: 1,
   },
 });
