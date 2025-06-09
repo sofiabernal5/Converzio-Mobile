@@ -1,4 +1,4 @@
-// app/(tabs)/home.tsx
+// app/home.tsx (Complete file with consistent styling)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -10,72 +10,53 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-// import HeyGenAvatarCreator from '../../components/HeyGenAvatarCreator';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import HeyGenAvatarCreator from '../components/HeyGenAvatarCreator';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface UserAvatar {
+interface UserInfo {
+  name?: string;
+  email?: string;
+}
+
+interface Avatar {
   id: string;
   name: string;
   status: string;
-  image_url?: string;
-  voice_description: string;
-  created_at: string;
+  voice: string;
+  createdAt: Date;
 }
 
 export default function HomeScreen() {
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [userAvatars, setUserAvatars] = useState<Avatar[]>([]);
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
-  const [userAvatars, setUserAvatars] = useState<UserAvatar[]>([]);
-  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
     loadUserData();
-    loadUserAvatars();
   }, []);
 
   const loadUserData = async () => {
     try {
-      const userData = await AsyncStorage.getItem('userInfo');
-      if (userData) {
-        setUserInfo(JSON.parse(userData));
-      }
+      // Load user data from AsyncStorage or API
+      // const userData = await AsyncStorage.getItem('userInfo');
+      // const avatarData = await AsyncStorage.getItem('userAvatars');
+      
+      // Set user data when available
+      // setUserInfo(JSON.parse(userData));
+      // setUserAvatars(JSON.parse(avatarData) || []);
     } catch (error) {
       console.error('Error loading user data:', error);
     }
   };
 
-  const loadUserAvatars = async () => {
-    try {
-      const avatarsData = await AsyncStorage.getItem('userAvatars');
-      if (avatarsData) {
-        setUserAvatars(JSON.parse(avatarsData));
-      }
-    } catch (error) {
-      console.error('Error loading avatars:', error);
-    }
-  };
-
-  const saveUserAvatars = async (avatars: UserAvatar[]) => {
-    try {
-      await AsyncStorage.setItem('userAvatars', JSON.stringify(avatars));
-      setUserAvatars(avatars);
-    } catch (error) {
-      console.error('Error saving avatars:', error);
-    }
-  };
-
-  const handleAvatarCreated = (avatarData: any) => {
-    const newAvatar: UserAvatar = {
-      ...avatarData,
-      created_at: new Date().toISOString(),
-    };
-
-    const updatedAvatars = [...userAvatars, newAvatar];
-    saveUserAvatars(updatedAvatars);
-    setShowAvatarCreator(false);
-    
+  const createVideoWithAvatar = (avatar: Avatar) => {
     Alert.alert(
-      'Success!',
-      'Your avatar has been saved. You can now use it to create videos.',
+      'Create Video',
+      `Creating a video with ${avatar.name}...`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Continue', onPress: () => console.log('Video creation started') }
+      ]
     );
   };
 
@@ -85,34 +66,14 @@ export default function HomeScreen() {
       'Are you sure you want to delete this avatar?',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
+        { 
+          text: 'Delete', 
           style: 'destructive',
           onPress: () => {
-            const updatedAvatars = userAvatars.filter(avatar => avatar.id !== avatarId);
-            saveUserAvatars(updatedAvatars);
-          },
-        },
-      ],
-    );
-  };
-
-  const createVideoWithAvatar = (avatar: UserAvatar) => {
-    // This would navigate to a video creation screen
-    Alert.alert(
-      'Create Video',
-      `Start creating a video with ${avatar.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Create Video',
-          onPress: () => {
-            // Navigate to video creation screen
-            // router.push(`/create-video?avatarId=${avatar.id}`);
-            Alert.alert('Feature Coming Soon', 'Video creation interface will be available soon!');
-          },
-        },
-      ],
+            setUserAvatars(prev => prev.filter(avatar => avatar.id !== avatarId));
+          }
+        }
+      ]
     );
   };
 
@@ -139,10 +100,10 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+      <View style={styles.mainContainer}>
+        {/* Header with Blue Gradient */}
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={['#4a90e2', '#357abd']}
           style={styles.header}
         >
           <Text style={styles.welcomeText}>
@@ -153,129 +114,146 @@ export default function HomeScreen() {
           </Text>
         </LinearGradient>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionGrid}>
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={() => setShowAvatarCreator(true)}
-            >
-              <Text style={styles.actionIcon}>Avatar</Text>
-              <Text style={styles.actionTitle}>Create Avatar</Text>
-              <Text style={styles.actionDescription}>
-                Create your personalized AI avatar
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionCard, userAvatars.length === 0 && styles.disabledCard]}
-              onPress={() => {
-                if (userAvatars.length > 0) {
-                  Alert.alert('Feature Coming Soon', 'Video creation interface will be available soon!');
-                } else {
-                  Alert.alert('No Avatars', 'Please create an avatar first.');
-                }
-              }}
-            >
-              <Text style={styles.actionIcon}>Video</Text>
-              <Text style={styles.actionTitle}>Create Video</Text>
-              <Text style={styles.actionDescription}>
-                Generate videos with your avatars
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* My Avatars */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Avatars ({userAvatars.length})</Text>
-          
-          {userAvatars.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>No avatars</Text>
-              <Text style={styles.emptyStateTitle}>No avatars yet</Text>
-              <Text style={styles.emptyStateDescription}>
-                Create your first AI avatar to get started with video generation
-              </Text>
+        {/* White Background Content */}
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Quick Actions */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.actionGrid}>
               <TouchableOpacity
-                style={styles.createFirstAvatarButton}
+                style={styles.actionCard}
                 onPress={() => setShowAvatarCreator(true)}
               >
-                <Text style={styles.createFirstAvatarButtonText}>Create Your First Avatar</Text>
+                <LinearGradient
+                  colors={['#4a90e2', '#357abd']}
+                  style={styles.actionCardGradient}
+                >
+                  <Text style={styles.actionTitle}>Create Avatar</Text>
+                  <Text style={styles.actionDescription}>
+                    Create your personalized AI avatar
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionCard, userAvatars.length === 0 && styles.disabledCard]}
+                onPress={() => {
+                  if (userAvatars.length > 0) {
+                    Alert.alert('Feature Coming Soon', 'Video creation interface will be available soon!');
+                  } else {
+                    Alert.alert('No Avatars', 'Please create an avatar first.');
+                  }
+                }}
+              >
+                <LinearGradient
+                  colors={userAvatars.length === 0 ? ['#cccccc', '#999999'] : ['#28a745', '#20c997']}
+                  style={styles.actionCardGradient}
+                >
+                  <Text style={styles.actionTitle}>Create Video</Text>
+                  <Text style={styles.actionDescription}>
+                    Generate videos with your avatars
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
-          ) : (
-            <View style={styles.avatarGrid}>
-              {userAvatars.map((avatar) => (
-                <View key={avatar.id} style={styles.avatarCard}>
-                  <View style={styles.avatarInfo}>
-                    <Text style={styles.avatarName}>{avatar.name}</Text>
-                    <Text style={styles.avatarStatus}>
-                      Status: {avatar.status.charAt(0).toUpperCase() + avatar.status.slice(1)}
-                    </Text>
-                    <Text style={styles.avatarVoice}>
-                      Voice: {avatar.voice_description.slice(0, 30)}...
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.avatarActions}>
-                    <TouchableOpacity
-                      style={styles.useAvatarButton}
-                      onPress={() => createVideoWithAvatar(avatar)}
-                    >
-                      <Text style={styles.useAvatarButtonText}>Use Avatar</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.deleteAvatarButton}
-                      onPress={() => deleteAvatar(avatar.id)}
-                    >
-                      <Text style={styles.deleteAvatarButtonText}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
+          </View>
 
-        {/* Features */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What You Can Do</Text>
-          <View style={styles.featureList}>
-            <View style={styles.featureItem}>
-              <Text style={styles.featureIcon}>AI</Text>
-              <View style={styles.featureText}>
-                <Text style={styles.featureTitle}>AI Avatar Creation</Text>
-                <Text style={styles.featureDescription}>
-                  Transform your photo into a realistic AI avatar
-                </Text>
-              </View>
-            </View>
+          {/* My Avatars Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>My Avatars</Text>
             
-            <View style={styles.featureItem}>
-              <Text style={styles.featureIcon}>Video</Text>
-              <View style={styles.featureText}>
-                <Text style={styles.featureTitle}>Video Generation</Text>
-                <Text style={styles.featureDescription}>
-                  Create professional videos with your avatar
+            {userAvatars.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateTitle}>No Avatars Yet</Text>
+                <Text style={styles.emptyStateDescription}>
+                  Get started by creating your first AI avatar. It only takes a few minutes!
                 </Text>
+                <TouchableOpacity
+                  style={styles.createFirstAvatarButton}
+                  onPress={() => setShowAvatarCreator(true)}
+                >
+                  <LinearGradient
+                    colors={['#4a90e2', '#357abd']}
+                    style={styles.createFirstAvatarButtonGradient}
+                  >
+                    <Text style={styles.createFirstAvatarButtonText}>Create Your First Avatar</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
-            </View>
-            
-            <View style={styles.featureItem}>
-              <Text style={styles.featureIcon}>Voice</Text>
-              <View style={styles.featureText}>
-                <Text style={styles.featureTitle}>Custom Voice</Text>
-                <Text style={styles.featureDescription}>
-                  Personalize your avatar's voice and speaking style
-                </Text>
+            ) : (
+              <View style={styles.avatarGrid}>
+                {userAvatars.map((avatar) => (
+                  <View key={avatar.id} style={styles.avatarCard}>
+                    <View style={styles.avatarInfo}>
+                      <Text style={styles.avatarName}>{avatar.name}</Text>
+                      <Text style={styles.avatarStatus}>Status: {avatar.status}</Text>
+                      <Text style={styles.avatarVoice}>Voice: {avatar.voice}</Text>
+                    </View>
+                    <View style={styles.avatarActions}>
+                      <TouchableOpacity
+                        style={styles.useAvatarButton}
+                        onPress={() => createVideoWithAvatar(avatar)}
+                      >
+                        <LinearGradient
+                          colors={['#4a90e2', '#357abd']}
+                          style={styles.useAvatarButtonGradient}
+                        >
+                          <Text style={styles.useAvatarButtonText}>Use Avatar</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={styles.deleteAvatarButton}
+                        onPress={() => deleteAvatar(avatar.id)}
+                      >
+                        <LinearGradient
+                          colors={['#dc3545', '#c82333']}
+                          style={styles.deleteAvatarButtonGradient}
+                        >
+                          <Text style={styles.deleteAvatarButtonText}>Delete</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Features Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Platform Features</Text>
+            <View style={styles.featureList}>
+              <View style={styles.featureItem}>
+                <View style={styles.featureText}>
+                  <Text style={styles.featureTitle}>AI-Powered Avatars</Text>
+                  <Text style={styles.featureDescription}>
+                    Create realistic digital versions of yourself using advanced AI technology
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.featureItem}>
+                <View style={styles.featureText}>
+                  <Text style={styles.featureTitle}>Professional Quality</Text>
+                  <Text style={styles.featureDescription}>
+                    Generate high-quality videos perfect for business and professional use
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.featureItem}>
+                <View style={styles.featureText}>
+                  <Text style={styles.featureTitle}>Fast Generation</Text>
+                  <Text style={styles.featureDescription}>
+                    Create videos in minutes, not hours. Scale your content production effortlessly
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -283,14 +261,18 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
+  },
+  mainContainer: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   header: {
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 20,
     alignItems: 'center',
   },
   welcomeText: {
@@ -298,6 +280,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   headerSubtitle: {
     fontSize: 16,
@@ -317,14 +302,12 @@ const styles = StyleSheet.create({
   actionGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
   },
   actionCard: {
     flex: 1,
-    backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 6,
-    alignItems: 'center',
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -334,26 +317,29 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  actionCardGradient: {
+    padding: 20,
+    alignItems: 'center',
+    minHeight: 120,
+    justifyContent: 'center',
+    flex: 1,
+  },
   disabledCard: {
     opacity: 0.6,
-  },
-  actionIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#667eea',
-    marginBottom: 12,
   },
   actionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginBottom: 8,
+    textAlign: 'center',
   },
   actionDescription: {
     fontSize: 14,
-    color: '#6c757d',
+    color: '#fff',
     textAlign: 'center',
     lineHeight: 20,
+    opacity: 0.9,
   },
   emptyState: {
     alignItems: 'center',
@@ -368,12 +354,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  emptyStateIcon: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6c757d',
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   emptyStateTitle: {
     fontSize: 18,
@@ -389,15 +371,18 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   createFirstAvatarButton: {
-    backgroundColor: '#667eea',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  createFirstAvatarButtonGradient: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
   },
   createFirstAvatarButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   avatarGrid: {
     gap: 16,
@@ -414,6 +399,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   avatarInfo: {
     marginBottom: 16,
@@ -436,14 +423,16 @@ const styles = StyleSheet.create({
   avatarActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   useAvatarButton: {
-    backgroundColor: '#667eea',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
     flex: 1,
-    marginRight: 8,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  useAvatarButtonGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   useAvatarButtonText: {
     color: '#fff',
@@ -452,10 +441,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   deleteAvatarButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
     borderRadius: 6,
+    overflow: 'hidden',
+  },
+  deleteAvatarButtonGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   deleteAvatarButtonText: {
     color: '#fff',
@@ -478,12 +469,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  featureIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#667eea',
-    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   featureText: {
     flex: 1,
@@ -519,17 +506,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    backgroundColor: '#667eea',
   },
   placeholderText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     textAlign: 'center',
     marginBottom: 8,
   },
   placeholderSubtext: {
     fontSize: 14,
-    color: '#6c757d',
+    color: '#fff',
     textAlign: 'center',
+    opacity: 0.8,
   },
 });
