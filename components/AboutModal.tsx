@@ -10,6 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Colors from '../constants/Colors';
 
 interface AboutModalProps {
   visible: boolean;
@@ -26,7 +27,7 @@ export default function AboutModal({ visible, onClose }: AboutModalProps) {
     >
       <SafeAreaView style={styles.container}>
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={[Colors.secondary, Colors.accent, Colors.accent]}
           style={styles.header}
         >
           <View style={styles.headerContent}>
@@ -100,7 +101,7 @@ export default function AboutModal({ visible, onClose }: AboutModalProps) {
                 <View style={styles.stepContent}>
                   <Text style={styles.stepTitle}>Create Your Account</Text>
                   <Text style={styles.stepDescription}>
-                    Sign up with Google or email to get started
+                    Sign up with your email to get started
                   </Text>
                 </View>
               </View>
@@ -112,7 +113,7 @@ export default function AboutModal({ visible, onClose }: AboutModalProps) {
                 <View style={styles.stepContent}>
                   <Text style={styles.stepTitle}>Upload Your Photo</Text>
                   <Text style={styles.stepDescription}>
-                    Provide a clear photo to create your AI avatar
+                    Provide a clear photo to create your Digital Twin
                   </Text>
                 </View>
               </View>
@@ -122,12 +123,25 @@ export default function AboutModal({ visible, onClose }: AboutModalProps) {
                   <Text style={styles.stepNumberText}>3</Text>
                 </View>
                 <View style={styles.stepContent}>
+                  <Text style={styles.stepTitle}>Upload Your Voice Recording</Text>
+                  <Text style={styles.stepDescription}>
+                    Provide a high quality voice recording for your Digital Twin
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.stepItem}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>4</Text>
+                </View>
+                <View style={styles.stepContent}>
                   <Text style={styles.stepTitle}>Generate Videos</Text>
                   <Text style={styles.stepDescription}>
                     Create professional videos with your personalized avatar
                   </Text>
                 </View>
               </View>
+              
             </View>
           </View>
 

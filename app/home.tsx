@@ -1,4 +1,4 @@
-// app/home.tsx (Complete file with consistent styling)
+// app/home.tsx (Updated with HeyGen API integration)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -8,10 +8,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-// import HeyGenAvatarCreator from '../components/HeyGenAvatarCreator';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserInfo {
   name?: string;
@@ -26,10 +25,15 @@ interface Avatar {
   createdAt: Date;
 }
 
+//HEYGEN API: NEED TO MAKE DATA DYNAMIC FOR THE APP
+const HEYGEN_API_KEY = 'ZmQxMWE0MjRlNDAzNDAyYmJjZGE2YzZiNzY5MjgzNzUtMTcyMjYxMzM5MQ==';
+const HEYGEN_API_URL = 'https://api.heygen.com/v2/video/generate';
+
 export default function HomeScreen() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatars, setUserAvatars] = useState<Avatar[]>([]);
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
+  const [isCreatingAvatar, setIsCreatingAvatar] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -46,6 +50,98 @@ export default function HomeScreen() {
       // setUserAvatars(JSON.parse(avatarData) || []);
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  const createAvatarWithHeyGen = async () => {
+    setIsCreatingAvatar(true);
+    
+    try {
+      const requestBody = {
+        video_inputs: [
+          {
+            character: {
+              type: "avatar",
+              avatar_id: "Lina_Dress_Sitting_Side_public",
+              avatar_style: "normal"
+            },
+            voice: {
+              type: "text",
+              input_text: "Welcome to the HeyGen API!",
+              voice_id: "119caed25533477ba63822d5d1552d25",
+              speed: 1.1
+            }
+          }
+        ],
+        dimension: {
+          width: 1280,
+          height: 720
+        }
+      };
+
+      console.log('Making request to HeyGen API...');
+      
+      const response = await fetch(HEYGEN_API_URL, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': HEYGEN_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const responseData = await response.json();
+      
+      if (response.ok) {
+        console.log('HeyGen API Success:', responseData);
+        
+        // Create a new avatar object with the response data
+        const newAvatar: Avatar = {
+          id: responseData.data?.video_id || `avatar_${Date.now()}`,
+          name: `Avatar ${userAvatars.length + 1}`,
+          status: 'Generated',
+          voice: 'HeyGen Voice',
+          createdAt: new Date(),
+        };
+
+        // Add the new avatar to the list
+        setUserAvatars(prev => [...prev, newAvatar]);
+        
+        Alert.alert(
+          'Success!',
+          'Your avatar has been created successfully with HeyGen API!',
+          [
+            {
+              text: 'OK',
+              onPress: () => console.log('Avatar creation completed')
+            }
+          ]
+        );
+      } else {
+        console.error('HeyGen API Error:', responseData);
+        Alert.alert(
+          'Error',
+          `Failed to create avatar: ${responseData.message || 'Unknown error'}`,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Network Error:', error);
+      Alert.alert(
+        'Network Error',
+        'Failed to connect to HeyGen API. Please check your internet connection.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsCreatingAvatar(false);
+    }
+  };
+
+  const createAvatar = async () => {
+    try {
+      await createAvatarWithHeyGen();
+    } catch (error) {
+      console.error("Error creating avatar: ", error);
     }
   };
 
@@ -114,6 +210,17 @@ export default function HomeScreen() {
           </Text>
         </LinearGradient>
 
+        {/* Loading Overlay */}
+        {isCreatingAvatar && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4a90e2" />
+              <Text style={styles.loadingText}>Creating your avatar...</Text>
+              <Text style={styles.loadingSubtext}>This may take a few seconds</Text>
+            </View>
+          </View>
+        )}
+
         {/* White Background Content */}
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Quick Actions */}
@@ -121,32 +228,43 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionGrid}>
               <TouchableOpacity
-                style={styles.actionCard}
-                onPress={() => setShowAvatarCreator(true)}
+                style={[styles.actionCard, isCreatingAvatar && styles.disabledCard]}
+                onPress={() => {
+                  if (!isCreatingAvatar) {
+                    createAvatar();
+                  }
+                }}
+                disabled={isCreatingAvatar}
               >
                 <LinearGradient
-                  colors={['#4a90e2', '#357abd']}
+                  colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
                   style={styles.actionCardGradient}
                 >
-                  <Text style={styles.actionTitle}>Create Avatar</Text>
+                  <Text style={styles.actionTitle}>
+                    {isCreatingAvatar ? 'Creating...' : 'Create Avatar'}
+                  </Text>
                   <Text style={styles.actionDescription}>
-                    Create your personalized AI avatar
+                    {isCreatingAvatar 
+                      ? 'Please wait while we generate your avatar'
+                      : 'Create your personalized AI avatar'
+                    }
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.actionCard, userAvatars.length === 0 && styles.disabledCard]}
+                style={[styles.actionCard, (userAvatars.length === 0 || isCreatingAvatar) && styles.disabledCard]}
                 onPress={() => {
-                  if (userAvatars.length > 0) {
+                  if (userAvatars.length > 0 && !isCreatingAvatar) {
                     Alert.alert('Feature Coming Soon', 'Video creation interface will be available soon!');
-                  } else {
+                  } else if (userAvatars.length === 0) {
                     Alert.alert('No Avatars', 'Please create an avatar first.');
                   }
                 }}
+                disabled={isCreatingAvatar}
               >
                 <LinearGradient
-                  colors={userAvatars.length === 0 ? ['#cccccc', '#999999'] : ['#28a745', '#20c997']}
+                  colors={(userAvatars.length === 0 || isCreatingAvatar) ? ['#cccccc', '#999999'] : ['#28a745', '#20c997']}
                   style={styles.actionCardGradient}
                 >
                   <Text style={styles.actionTitle}>Create Video</Text>
@@ -169,14 +287,21 @@ export default function HomeScreen() {
                   Get started by creating your first AI avatar. It only takes a few minutes!
                 </Text>
                 <TouchableOpacity
-                  style={styles.createFirstAvatarButton}
-                  onPress={() => setShowAvatarCreator(true)}
+                  style={[styles.createFirstAvatarButton, isCreatingAvatar && styles.disabledCard]}
+                  onPress={() => {
+                    if (!isCreatingAvatar) {
+                      createAvatar();
+                    }
+                  }}
+                  disabled={isCreatingAvatar}
                 >
                   <LinearGradient
-                    colors={['#4a90e2', '#357abd']}
+                    colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
                     style={styles.createFirstAvatarButtonGradient}
                   >
-                    <Text style={styles.createFirstAvatarButtonText}>Create Your First Avatar</Text>
+                    <Text style={styles.createFirstAvatarButtonText}>
+                      {isCreatingAvatar ? 'Creating Avatar...' : 'Create Your First Avatar'}
+                    </Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -193,9 +318,10 @@ export default function HomeScreen() {
                       <TouchableOpacity
                         style={styles.useAvatarButton}
                         onPress={() => createVideoWithAvatar(avatar)}
+                        disabled={isCreatingAvatar}
                       >
                         <LinearGradient
-                          colors={['#4a90e2', '#357abd']}
+                          colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
                           style={styles.useAvatarButtonGradient}
                         >
                           <Text style={styles.useAvatarButtonText}>Use Avatar</Text>
@@ -205,9 +331,10 @@ export default function HomeScreen() {
                       <TouchableOpacity
                         style={styles.deleteAvatarButton}
                         onPress={() => deleteAvatar(avatar.id)}
+                        disabled={isCreatingAvatar}
                       >
                         <LinearGradient
-                          colors={['#dc3545', '#c82333']}
+                          colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#dc3545', '#c82333']}
                           style={styles.deleteAvatarButtonGradient}
                         >
                           <Text style={styles.deleteAvatarButtonText}>Delete</Text>
@@ -359,6 +486,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     opacity: 0.9,
+    textAlign: 'center',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginTop: 8,
     textAlign: 'center',
   },
   section: {

@@ -8,6 +8,7 @@ import {
   ScrollView,
   Animated,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -95,15 +96,7 @@ export default function LandingScreen() {
             },
           ]}>
           <View style={styles.contentWrapper}>
-            <Animated.Text
-              style={[
-                styles.welcomeText,
-                {
-                  opacity: highlightOpacity,
-                },
-              ]}>
-              Welcome to Converzio
-            </Animated.Text>
+            <Image source={require('../assets/images/Converzio-logo.png')} style={{ width: 350, height: 150, marginBottom: 0}} resizeMode="contain" />
             <Text style={styles.sloganText}>
               Digitize Your Professional Branding
             </Text>
