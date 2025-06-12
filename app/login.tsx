@@ -1,4 +1,4 @@
-// app/login.tsx (Cleaned up with separate SignUp component)
+// app/login.tsx (Updated with Backend Integration)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,15 +18,18 @@ import * as WebBrowser from 'expo-web-browser';
 import AnimatedBackground from '../components/AnimatedBackground';
 import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
+import { useAuth } from '../context/AuthContext';
 
 // Complete the authentication session
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isGoogleSigninInProgress, setIsGoogleSigninInProgress] = useState(false);
 
   // Google OAuth configuration
@@ -102,10 +106,9 @@ export default function LoginScreen() {
 
       const userInfo = await userInfoResponse.json();
       
+      // Send Google user info to your backend for authentication
+      // This would call your backend's Google auth endpoint
       console.log('Google User Info:', userInfo);
-      
-      // Store user info in your app's state/storage here
-      // For example, you might want to save to AsyncStorage or your state management
       
       Alert.alert(
         'Welcome!', 
@@ -114,7 +117,6 @@ export default function LoginScreen() {
           { 
             text: 'Continue', 
             onPress: () => {
-              // Navigate to home screen
               router.replace('/home');
             }
           }
@@ -128,17 +130,26 @@ export default function LoginScreen() {
     }
   };
 
-  const handleEmailLogin = () => {
+  const handleEmailLogin = async () => {
+    console.log('=== TESTING BACKEND CONNECTION ===');
+    console.log('Email:', email);
+    console.log('Attempting to connect to backend...');
+    
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
     }
     
-    // Simple validation - in a real app, you'd authenticate with a server
-    if (email.includes('@') && password.length >= 6) {
-      router.replace('/home');
-    } else {
-      Alert.alert('Error', 'Invalid credentials. Please check your email and password.');
+    try {
+      // Test backend connection
+      const response = await fetch('http://localhost:5000/api/test');
+      const data = await response.json();
+      console.log('Backend test response:', data);
+      
+      Alert.alert('Backend Connection', 'Connected! Check console for details.');
+    } catch (error) {
+      console.error('Backend connection failed:', error);
+      Alert.alert('Backend Connection Failed', 'Cannot connect to backend. Check console.');
     }
   };
 
@@ -150,13 +161,8 @@ export default function LoginScreen() {
 
     try {
       setIsGoogleSigninInProgress(true);
-      
-      // Debug: Log the redirect URI being used
-      console.log('Redirect URI:', 'https://auth.expo.io/@sofiabernal/converzio-ios');
-      
       const result = await promptAsync();
       
-      // The result is handled in the useEffect above
       if (result.type === 'cancel') {
         setIsGoogleSigninInProgress(false);
       }
@@ -198,11 +204,11 @@ export default function LoginScreen() {
                 <View style={styles.formContainer}>
                   {/* Google Sign In Button */}
                   <TouchableOpacity
-                    style={[styles.googleButton, isGoogleSigninInProgress && styles.disabledButton]}
+                    style={[styles.googleButton, (isGoogleSigninInProgress || isLoading) && styles.disabledButton]}
                     onPress={handleGoogleSignIn}
-                    disabled={isGoogleSigninInProgress || !request}>
+                    disabled={isGoogleSigninInProgress || isLoading || !request}>
                     <LinearGradient
-                      colors={isGoogleSigninInProgress ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
+                      colors={(isGoogleSigninInProgress || isLoading) ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={StyleSheet.absoluteFill}
@@ -229,6 +235,7 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    editable={!isLoading && !isGoogleSigninInProgress}
                   />
                   
                   <TextInput
@@ -240,26 +247,33 @@ export default function LoginScreen() {
                     secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}
+                    editable={!isLoading && !isGoogleSigninInProgress}
                   />
                   
                   <TouchableOpacity
                     onPress={handleEmailLogin}
-                    style={styles.buttonContainer}>
+                    style={styles.buttonContainer}
+                    disabled={isLoading || isGoogleSigninInProgress}>
                     <View style={styles.buttonWrapper}>
                       <LinearGradient
-                        colors={['#4a90e2', '#357abd']}
+                        colors={(isLoading || isGoogleSigninInProgress) ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
                       />
-                      <Text style={styles.buttonText}>SIGN IN</Text>
+                      {isLoading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.buttonText}>SIGN IN</Text>
+                      )}
                     </View>
                   </TouchableOpacity>
                   
                   {/* Small Sign Up text link */}
                   <TouchableOpacity
                     onPress={toggleMode}
-                    style={styles.smallSignUpButton}>
+                    style={styles.smallSignUpButton}
+                    disabled={isLoading || isGoogleSigninInProgress}>
                     <Text style={styles.smallSignUpText}>
                       Don't have an account? Sign Up
                     </Text>
@@ -272,6 +286,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={styles.backButton}
               onPress={() => router.back()}
+              disabled={isLoading || isGoogleSigninInProgress}
             >
               <Text style={styles.backButtonText}>Back to Welcome</Text>
             </TouchableOpacity>
@@ -414,16 +429,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     opacity: 0.8,
     fontSize: 14,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 16,
-  },
-  halfInput: {
-    width: '48%',
-    marginBottom: 0,
   },
   smallSignUpButton: {
     marginTop: 12,
