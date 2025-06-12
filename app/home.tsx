@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
 interface UserInfo {
   name?: string;
@@ -26,8 +27,9 @@ interface Avatar {
 }
 
 //HEYGEN API: NEED TO MAKE DATA DYNAMIC FOR THE APP
-const HEYGEN_API_KEY = 'ZmQxMWE0MjRlNDAzNDAyYmJjZGE2YzZiNzY5MjgzNzUtMTcyMjYxMzM5MQ==';
-const HEYGEN_API_URL = 'https://api.heygen.com/v2/video/generate';
+
+const { HEYGEN_API_KEY, HEYGEN_API_URL } = Constants.expoConfig?.extra || {};
+
 
 export default function HomeScreen() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
