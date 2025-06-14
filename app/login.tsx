@@ -142,7 +142,7 @@ export default function LoginScreen() {
     
     try {
       // Test backend connection
-      const response = await fetch('http://localhost:5000/api/test');
+      const response = await fetch('http://localhost:5001/api/test');
       const data = await response.json();
       console.log('Backend test response:', data);
       
