@@ -1,4 +1,4 @@
-// app/home.tsx (Updated with HeyGen API integration)
+// app/home.tsx (Updated with navigation to avatar selection)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -8,10 +8,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 
 interface UserInfo {
   name?: string;
@@ -21,21 +20,16 @@ interface UserInfo {
 interface Avatar {
   id: string;
   name: string;
+  type: 'photo' | 'video';
   status: string;
   voice: string;
   createdAt: Date;
 }
 
-//HEYGEN API: NEED TO MAKE DATA DYNAMIC FOR THE APP
-
-const { HEYGEN_API_KEY, HEYGEN_API_URL } = Constants.expoConfig?.extra || {};
-
-
 export default function HomeScreen() {
+  const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatars, setUserAvatars] = useState<Avatar[]>([]);
-  const [showAvatarCreator, setShowAvatarCreator] = useState(false);
-  const [isCreatingAvatar, setIsCreatingAvatar] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -55,96 +49,9 @@ export default function HomeScreen() {
     }
   };
 
-  const createAvatarWithHeyGen = async () => {
-    setIsCreatingAvatar(true);
-    
-    try {
-      const requestBody = {
-        video_inputs: [
-          {
-            character: {
-              type: "avatar",
-              avatar_id: "Lina_Dress_Sitting_Side_public",
-              avatar_style: "normal"
-            },
-            voice: {
-              type: "text",
-              input_text: "Welcome to the HeyGen API!",
-              voice_id: "119caed25533477ba63822d5d1552d25",
-              speed: 1.1
-            }
-          }
-        ],
-        dimension: {
-          width: 1280,
-          height: 720
-        }
-      };
-
-      console.log('Making request to HeyGen API...');
-      
-      const response = await fetch(HEYGEN_API_URL, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': HEYGEN_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const responseData = await response.json();
-      
-      if (response.ok) {
-        console.log('HeyGen API Success:', responseData);
-        
-        // Create a new avatar object with the response data
-        const newAvatar: Avatar = {
-          id: responseData.data?.video_id || `avatar_${Date.now()}`,
-          name: `Avatar ${userAvatars.length + 1}`,
-          status: 'Generated',
-          voice: 'HeyGen Voice',
-          createdAt: new Date(),
-        };
-
-        // Add the new avatar to the list
-        setUserAvatars(prev => [...prev, newAvatar]);
-        
-        Alert.alert(
-          'Success!',
-          'Your avatar has been created successfully with HeyGen API!',
-          [
-            {
-              text: 'OK',
-              onPress: () => console.log('Avatar creation completed')
-            }
-          ]
-        );
-      } else {
-        console.error('HeyGen API Error:', responseData);
-        Alert.alert(
-          'Error',
-          `Failed to create avatar: ${responseData.message || 'Unknown error'}`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Network Error:', error);
-      Alert.alert(
-        'Network Error',
-        'Failed to connect to HeyGen API. Please check your internet connection.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsCreatingAvatar(false);
-    }
-  };
-
-  const createAvatar = async () => {
-    try {
-      await createAvatarWithHeyGen();
-    } catch (error) {
-      console.error("Error creating avatar: ", error);
-    }
+  const navigateToAvatarSelection = () => {
+    // Navigate to the avatar type selection screen
+    router.push('/avatar-selection');
   };
 
   const createVideoWithAvatar = (avatar: Avatar) => {
@@ -175,27 +82,6 @@ export default function HomeScreen() {
     );
   };
 
-  if (showAvatarCreator) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.placeholderContainer}>
-          <Text style={styles.placeholderText}>
-            HeyGen Avatar Creator will be here
-          </Text>
-          <Text style={styles.placeholderSubtext}>
-            Please create the HeyGenAvatarCreator component first
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => setShowAvatarCreator(false)}
-        >
-          <Text style={styles.closeButtonText}>Close</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.mainContainer}>
@@ -212,17 +98,6 @@ export default function HomeScreen() {
           </Text>
         </LinearGradient>
 
-        {/* Loading Overlay */}
-        {isCreatingAvatar && (
-          <View style={styles.loadingOverlay}>
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4a90e2" />
-              <Text style={styles.loadingText}>Creating your avatar...</Text>
-              <Text style={styles.loadingSubtext}>This may take a few seconds</Text>
-            </View>
-          </View>
-        )}
-
         {/* White Background Content */}
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Quick Actions */}
@@ -230,43 +105,32 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionGrid}>
               <TouchableOpacity
-                style={[styles.actionCard, isCreatingAvatar && styles.disabledCard]}
-                onPress={() => {
-                  if (!isCreatingAvatar) {
-                    createAvatar();
-                  }
-                }}
-                disabled={isCreatingAvatar}
+                style={styles.actionCard}
+                onPress={navigateToAvatarSelection}
               >
                 <LinearGradient
-                  colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
+                  colors={['#4a90e2', '#357abd']}
                   style={styles.actionCardGradient}
                 >
-                  <Text style={styles.actionTitle}>
-                    {isCreatingAvatar ? 'Creating...' : 'Create Avatar'}
-                  </Text>
+                  <Text style={styles.actionTitle}>Create Digital Avatar</Text>
                   <Text style={styles.actionDescription}>
-                    {isCreatingAvatar 
-                      ? 'Please wait while we generate your avatar'
-                      : 'Create your personalized AI avatar'
-                    }
+                    Choose between photo or video avatar creation
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.actionCard, (userAvatars.length === 0 || isCreatingAvatar) && styles.disabledCard]}
+                style={[styles.actionCard, userAvatars.length === 0 && styles.disabledCard]}
                 onPress={() => {
-                  if (userAvatars.length > 0 && !isCreatingAvatar) {
+                  if (userAvatars.length > 0) {
                     Alert.alert('Feature Coming Soon', 'Video creation interface will be available soon!');
-                  } else if (userAvatars.length === 0) {
+                  } else {
                     Alert.alert('No Avatars', 'Please create an avatar first.');
                   }
                 }}
-                disabled={isCreatingAvatar}
               >
                 <LinearGradient
-                  colors={(userAvatars.length === 0 || isCreatingAvatar) ? ['#cccccc', '#999999'] : ['#28a745', '#20c997']}
+                  colors={userAvatars.length === 0 ? ['#cccccc', '#999999'] : ['#28a745', '#20c997']}
                   style={styles.actionCardGradient}
                 >
                   <Text style={styles.actionTitle}>Create Video</Text>
@@ -286,23 +150,18 @@ export default function HomeScreen() {
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateTitle}>No Avatars Yet</Text>
                 <Text style={styles.emptyStateDescription}>
-                  Get started by creating your first AI avatar. It only takes a few minutes!
+                  Get started by creating your first AI avatar. Choose between a quick photo avatar or a premium video avatar!
                 </Text>
                 <TouchableOpacity
-                  style={[styles.createFirstAvatarButton, isCreatingAvatar && styles.disabledCard]}
-                  onPress={() => {
-                    if (!isCreatingAvatar) {
-                      createAvatar();
-                    }
-                  }}
-                  disabled={isCreatingAvatar}
+                  style={styles.createFirstAvatarButton}
+                  onPress={navigateToAvatarSelection}
                 >
                   <LinearGradient
-                    colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
+                    colors={['#4a90e2', '#357abd']}
                     style={styles.createFirstAvatarButtonGradient}
                   >
                     <Text style={styles.createFirstAvatarButtonText}>
-                      {isCreatingAvatar ? 'Creating Avatar...' : 'Create Your First Avatar'}
+                      Create Your First Avatar
                     </Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -313,6 +172,7 @@ export default function HomeScreen() {
                   <View key={avatar.id} style={styles.avatarCard}>
                     <View style={styles.avatarInfo}>
                       <Text style={styles.avatarName}>{avatar.name}</Text>
+                      <Text style={styles.avatarType}>Type: {avatar.type === 'photo' ? 'Photo Avatar' : 'Video Avatar'}</Text>
                       <Text style={styles.avatarStatus}>Status: {avatar.status}</Text>
                       <Text style={styles.avatarVoice}>Voice: {avatar.voice}</Text>
                     </View>
@@ -320,10 +180,9 @@ export default function HomeScreen() {
                       <TouchableOpacity
                         style={styles.useAvatarButton}
                         onPress={() => createVideoWithAvatar(avatar)}
-                        disabled={isCreatingAvatar}
                       >
                         <LinearGradient
-                          colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
+                          colors={['#4a90e2', '#357abd']}
                           style={styles.useAvatarButtonGradient}
                         >
                           <Text style={styles.useAvatarButtonText}>Use Avatar</Text>
@@ -333,10 +192,9 @@ export default function HomeScreen() {
                       <TouchableOpacity
                         style={styles.deleteAvatarButton}
                         onPress={() => deleteAvatar(avatar.id)}
-                        disabled={isCreatingAvatar}
                       >
                         <LinearGradient
-                          colors={isCreatingAvatar ? ['#cccccc', '#999999'] : ['#dc3545', '#c82333']}
+                          colors={['#dc3545', '#c82333']}
                           style={styles.deleteAvatarButtonGradient}
                         >
                           <Text style={styles.deleteAvatarButtonText}>Delete</Text>
@@ -358,6 +216,15 @@ export default function HomeScreen() {
                   <Text style={styles.featureTitle}>AI-Powered Avatars</Text>
                   <Text style={styles.featureDescription}>
                     Create realistic digital versions of yourself using advanced AI technology
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.featureItem}>
+                <View style={styles.featureText}>
+                  <Text style={styles.featureTitle}>Two Creation Methods</Text>
+                  <Text style={styles.featureDescription}>
+                    Choose between quick photo avatars or premium video avatars for different use cases
                   </Text>
                 </View>
               </View>
@@ -490,44 +357,6 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     textAlign: 'center',
   },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  loadingContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: '#6c757d',
-    marginTop: 8,
-    textAlign: 'center',
-  },
   section: {
     padding: 24,
   },
@@ -649,6 +478,12 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
+  avatarType: {
+    fontSize: 14,
+    color: '#4a90e2',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
   avatarStatus: {
     fontSize: 14,
     color: '#28a745',
@@ -723,41 +558,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6c757d',
     lineHeight: 20,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 60,
-    right: 16,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    zIndex: 1000,
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  placeholderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-    backgroundColor: '#667eea',
-  },
-  placeholderText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  placeholderSubtext: {
-    fontSize: 14,
-    color: '#fff',
-    textAlign: 'center',
-    opacity: 0.8,
   },
   bottomToolbar: {
     flexDirection: 'row',
