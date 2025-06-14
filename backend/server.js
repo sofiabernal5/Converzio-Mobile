@@ -82,6 +82,36 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Create a default test user on server start (for development)
+const createTestUser = async () => {
+  const testEmail = 'test@converzio.com';
+  const existingUser = findUserByEmail(testEmail);
+  
+  if (!existingUser) {
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    const testUser = {
+      id: userIdCounter++,
+      email: testEmail,
+      name: 'Test User',
+      firstName: 'Test',
+      lastName: 'User',
+      phone: '555-1234',
+      company: 'Converzio Test',
+      password: hashedPassword,
+      createdAt: new Date().toISOString(),
+    };
+    users.push(testUser);
+    console.log('✅ Test user created:', testEmail, 'password: password123');
+  } else {
+    console.log('✅ Test user already exists:', testEmail);
+  }
+};
+
+// Create test user when server starts (with small delay to ensure everything is initialized)
+setTimeout(() => {
+  createTestUser().catch(console.error);
+}, 100);
+
 // Root route
 app.get('/', (req, res) => {
   res.json({ 
@@ -91,11 +121,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// Test route
+// Test route - Enhanced with more info
 app.get('/api/test', (req, res) => {
   res.json({ 
     message: 'Test route working!', 
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    usersCount: users.length,
+    testUserExists: !!findUserByEmail('test@converzio.com'),
+    testCredentials: {
+      email: 'test@converzio.com',
+      password: 'password123'
+    }
   });
 });
 
@@ -597,7 +633,7 @@ process.on('SIGINT', () => {
 
 
 // Port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Converzio API Server running on http://localhost:${PORT}`);
