@@ -1,4 +1,4 @@
-// app/login.tsx (Cleaned up with separate SignUp component)
+// app/login.tsx (Production-Ready with proper auth flow)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,15 +18,19 @@ import * as WebBrowser from 'expo-web-browser';
 import AnimatedBackground from '../components/AnimatedBackground';
 import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
+import { useAuth } from '../context/AuthContext';
+import config from '../constants/config';
 
 // Complete the authentication session
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isGoogleSigninInProgress, setIsGoogleSigninInProgress] = useState(false);
 
   // Google OAuth configuration
@@ -47,6 +52,13 @@ export default function LoginScreen() {
     },
     discovery
   );
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.replace('/home');
+    }
+  }, [isAuthenticated, authLoading]);
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -102,43 +114,123 @@ export default function LoginScreen() {
 
       const userInfo = await userInfoResponse.json();
       
-      console.log('Google User Info:', userInfo);
-      
-      // Store user info in your app's state/storage here
-      // For example, you might want to save to AsyncStorage or your state management
-      
-      Alert.alert(
-        'Welcome!', 
-        `Hello ${userInfo?.name || 'User'}! You've successfully signed in with Google.`,
-        [
-          { 
-            text: 'Continue', 
-            onPress: () => {
-              // Navigate to home screen
-              router.replace('/home');
-            }
-          }
-        ]
-      );
+      // Send Google user info to your backend for authentication
+      const response = await fetch(`${config.API_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: authentication.accessToken,
+          userInfo: userInfo,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // The AuthContext will handle setting the user and navigating
+        Alert.alert(
+          'Welcome!', 
+          `Hello ${userInfo?.name || 'User'}! You've successfully signed in with Google.`
+        );
+      } else {
+        throw new Error(data.message || 'Google authentication failed');
+      }
     } catch (error) {
-      console.error('Failed to fetch user info:', error);
-      Alert.alert('Error', 'Failed to get user information');
+      console.error('Failed to authenticate with Google:', error);
+      Alert.alert('Error', 'Failed to authenticate with Google');
     } finally {
       setIsGoogleSigninInProgress(false);
     }
   };
 
-  const handleEmailLogin = () => {
+  const handleEmailLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
     }
     
-    // Simple validation - in a real app, you'd authenticate with a server
-    if (email.includes('@') && password.length >= 6) {
-      router.replace('/home');
-    } else {
-      Alert.alert('Error', 'Invalid credentials. Please check your email and password.');
+    setIsLoading(true);
+    
+    try {
+      console.log('=== ATTEMPTING LOGIN ===');
+      console.log('Email:', email);
+      console.log('API URL:', config.API_URL);
+      
+      // First test if backend is reachable with timeout
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const testResponse = await fetch(`${config.API_URL}/api/test`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!testResponse.ok) {
+          throw new Error('Backend not responding');
+        }
+        
+        console.log('Backend connection successful');
+      } catch (connectError: any) {
+        console.error('Backend connection failed:', connectError);
+        
+        let errorMessage = 'Cannot connect to the server. Please check your internet connection and try again.';
+        if (connectError.name === 'AbortError') {
+          errorMessage = 'Connection timeout. The server is taking too long to respond.';
+        }
+        
+        Alert.alert(
+          'Connection Error',
+          errorMessage,
+          [
+            { text: 'OK' }
+          ]
+        );
+        return;
+      }
+      
+      // Use the AuthContext login method for proper authentication
+      await login(email, password);
+      
+      console.log('Login successful');
+      // Navigation will be handled by the useEffect when isAuthenticated becomes true
+      
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      
+      // Handle different types of errors
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message;
+        
+        if (status === 401) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (status === 400) {
+          errorMessage = serverMessage || 'Please check your email and password.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = serverMessage || errorMessage;
+        }
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -150,13 +242,8 @@ export default function LoginScreen() {
 
     try {
       setIsGoogleSigninInProgress(true);
-      
-      // Debug: Log the redirect URI being used
-      console.log('Redirect URI:', 'https://auth.expo.io/@sofiabernal/converzio-ios');
-      
       const result = await promptAsync();
       
-      // The result is handled in the useEffect above
       if (result.type === 'cancel') {
         setIsGoogleSigninInProgress(false);
       }
@@ -172,6 +259,19 @@ export default function LoginScreen() {
     setEmail('');
     setPassword('');
   };
+
+  // Show loading if auth is being checked
+  if (authLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <AnimatedBackground />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -198,11 +298,11 @@ export default function LoginScreen() {
                 <View style={styles.formContainer}>
                   {/* Google Sign In Button */}
                   <TouchableOpacity
-                    style={[styles.googleButton, isGoogleSigninInProgress && styles.disabledButton]}
+                    style={[styles.googleButton, (isGoogleSigninInProgress || isLoading) && styles.disabledButton]}
                     onPress={handleGoogleSignIn}
-                    disabled={isGoogleSigninInProgress || !request}>
+                    disabled={isGoogleSigninInProgress || isLoading || !request}>
                     <LinearGradient
-                      colors={isGoogleSigninInProgress ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
+                      colors={(isGoogleSigninInProgress || isLoading) ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={StyleSheet.absoluteFill}
@@ -229,6 +329,7 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    editable={!isLoading && !isGoogleSigninInProgress}
                   />
                   
                   <TextInput
@@ -240,26 +341,33 @@ export default function LoginScreen() {
                     secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}
+                    editable={!isLoading && !isGoogleSigninInProgress}
                   />
                   
                   <TouchableOpacity
                     onPress={handleEmailLogin}
-                    style={styles.buttonContainer}>
+                    style={styles.buttonContainer}
+                    disabled={isLoading || isGoogleSigninInProgress}>
                     <View style={styles.buttonWrapper}>
                       <LinearGradient
-                        colors={['#4a90e2', '#357abd']}
+                        colors={(isLoading || isGoogleSigninInProgress) ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
                       />
-                      <Text style={styles.buttonText}>SIGN IN</Text>
+                      {isLoading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.buttonText}>SIGN IN</Text>
+                      )}
                     </View>
                   </TouchableOpacity>
                   
                   {/* Small Sign Up text link */}
                   <TouchableOpacity
                     onPress={toggleMode}
-                    style={styles.smallSignUpButton}>
+                    style={styles.smallSignUpButton}
+                    disabled={isLoading || isGoogleSigninInProgress}>
                     <Text style={styles.smallSignUpText}>
                       Don't have an account? Sign Up
                     </Text>
@@ -272,6 +380,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={styles.backButton}
               onPress={() => router.back()}
+              disabled={isLoading || isGoogleSigninInProgress}
             >
               <Text style={styles.backButtonText}>Back to Welcome</Text>
             </TouchableOpacity>
@@ -415,16 +524,6 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     fontSize: 14,
   },
-  nameContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 16,
-  },
-  halfInput: {
-    width: '48%',
-    marginBottom: 0,
-  },
   smallSignUpButton: {
     marginTop: 12,
     padding: 8,
@@ -436,5 +535,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textDecorationLine: 'underline',
     opacity: 0.9,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#ffffff',
+    marginTop: 16,
+    fontSize: 16,
   },
 });
