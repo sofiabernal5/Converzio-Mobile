@@ -35,8 +35,8 @@ export default function HeyGenAvatarCreator({ onAvatarCreated }: HeyGenAvatarCre
   const [createdAvatar, setCreatedAvatar] = useState<any>(null);
 
   // HeyGen API configuration
-  const HEYGEN_API_KEY = 'YOUR_HEYGEN_API_KEY'; // Replace with your actual API key
-  const HEYGEN_BASE_URL = 'https://api.heygen.com/v2';
+  const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY || '';
+  const HEYGEN_BASE_URL = process.env.HEYGEN_API_URL;
 
   const steps: AvatarCreationStep[] = [
     {
