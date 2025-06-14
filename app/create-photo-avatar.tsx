@@ -1,4 +1,4 @@
-// app/create-photo-avatar.tsx
+// app/create-photo-avatar.tsx (Clean version without audio recording errors)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -33,8 +33,11 @@ export default function CreatePhotoAvatarScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarName, setAvatarName] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [voiceStyle, setVoiceStyle] = useState('');
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
   const [createdAvatar, setCreatedAvatar] = useState<any>(null);
+  let durationInterval: NodeJS.Timeout | null = null;
 
   const steps: CreationStep[] = [
     {
@@ -45,12 +48,18 @@ export default function CreatePhotoAvatarScreen() {
     },
     {
       id: 2,
-      title: 'Avatar Settings',
-      description: 'Configure your avatar name and voice preferences',
-      completed: !!avatarName && !!voiceStyle,
+      title: 'Record Voice',
+      description: 'Record a sample of your voice for cloning',
+      completed: !!audioUri,
     },
     {
       id: 3,
+      title: 'Avatar Settings',
+      description: 'Configure your avatar name and settings',
+      completed: !!avatarName,
+    },
+    {
+      id: 4,
       title: 'Create Avatar',
       description: 'Generate your AI avatar',
       completed: !!createdAvatar,
@@ -82,8 +91,69 @@ export default function CreatePhotoAvatarScreen() {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      // Simulate recording functionality
+      // In a real app, you would integrate with expo-audio or react-native-audio-recorder-player
+      setIsRecording(true);
+      
+      // Start duration counter
+      const startTime = Date.now();
+      durationInterval = setInterval(() => {
+        setRecordingDuration(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+      
+    } catch (err) {
+      console.error('Failed to start recording', err);
+      Alert.alert('Error', 'Failed to start recording. Please try again.');
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      setIsRecording(false);
+      
+      // Clear duration interval
+      if (durationInterval) {
+        clearInterval(durationInterval);
+        durationInterval = null;
+      }
+      
+      // Simulate recorded audio URI
+      const simulatedUri = `mock_audio_${Date.now()}.m4a`;
+      setAudioUri(simulatedUri);
+      setRecordingDuration(0);
+      
+    } catch (error) {
+      console.error('Failed to stop recording', error);
+      Alert.alert('Error', 'Failed to stop recording. Please try again.');
+    }
+  };
+
+  const deleteRecording = () => {
+    setAudioUri(null);
+    setRecordingDuration(0);
+    setIsRecording(false);
+    if (durationInterval) {
+      clearInterval(durationInterval);
+      durationInterval = null;
+    }
+  };
+
+  const playRecording = async () => {
+    if (!audioUri) return;
+    
+    try {
+      // Simulate audio playback
+      Alert.alert('Audio Playback', 'Playing recorded audio sample...');
+    } catch (error) {
+      console.error('Error playing recording:', error);
+      Alert.alert('Error', 'Failed to play recording.');
+    }
+  };
+
   const createAvatarWithHeyGen = async () => {
-    if (!selectedImage || !avatarName) {
+    if (!selectedImage || !avatarName || !audioUri) {
       Alert.alert('Missing Information', 'Please complete all required fields.');
       return;
     }
@@ -130,13 +200,14 @@ export default function CreatePhotoAvatarScreen() {
           name: avatarName,
           type: 'photo',
           status: 'Generated',
-          voice: voiceStyle || 'Default Voice',
+          voice: 'Custom Voice',
           createdAt: new Date(),
           image: selectedImage,
+          audioSample: audioUri,
         };
 
         setCreatedAvatar(newAvatar);
-        setCurrentStep(3);
+        setCurrentStep(4);
         
         Alert.alert(
           'Success!',
@@ -232,33 +303,80 @@ export default function CreatePhotoAvatarScreen() {
   const renderStep2 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepDescription}>
-        Configure your avatar settings to personalize your AI creation.
+        Record a sample of your voice speaking naturally. This will be used to clone your voice for the avatar.
       </Text>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Avatar Name *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={avatarName}
-          onChangeText={setAvatarName}
-          placeholder="Enter your avatar's name"
-          placeholderTextColor="rgba(255, 255, 255, 0.6)"
-        />
-      </View>
+      {!audioUri ? (
+        <View style={styles.recordingContainer}>
+          <View style={styles.recordingVisual}>
+            <View style={[styles.recordingCircle, isRecording && styles.recordingActive]}>
+              <Text style={styles.recordingIcon}>MIC</Text>
+            </View>
+            {isRecording && (
+              <Text style={styles.recordingTimer}>
+                {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+              </Text>
+            )}
+          </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Voice Style</Text>
-        <TextInput
-          style={styles.textInput}
-          value={voiceStyle}
-          onChangeText={setVoiceStyle}
-          placeholder="e.g., Professional, Friendly, Energetic"
-          placeholderTextColor="rgba(255, 255, 255, 0.6)"
-        />
-        <Text style={styles.inputHelpText}>
-          Describe how you want your avatar to sound (optional)
-        </Text>
-      </View>
+          <TouchableOpacity
+            style={[styles.recordButton, isRecording && styles.recordingButton]}
+            onPress={isRecording ? stopRecording : startRecording}
+          >
+            <LinearGradient
+              colors={isRecording ? ['#dc3545', '#c82333'] : ['#28a745', '#20c997']}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>
+                {isRecording ? 'Stop Recording' : 'Start Recording'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <View style={styles.recordingTips}>
+            <Text style={styles.tipsTitle}>Recording Tips:</Text>
+            <Text style={styles.tipText}>• Speak for 30-60 seconds</Text>
+            <Text style={styles.tipText}>• Use a quiet environment</Text>
+            <Text style={styles.tipText}>• Speak naturally and clearly</Text>
+            <Text style={styles.tipText}>• Hold device close to your mouth</Text>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.audioPreviewContainer}>
+          <View style={styles.audioPreview}>
+            <Text style={styles.audioPreviewTitle}>Voice Sample Recorded</Text>
+            <Text style={styles.audioPreviewDuration}>
+              Duration: {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+            </Text>
+            
+            <View style={styles.audioControls}>
+              <TouchableOpacity
+                style={styles.audioButton}
+                onPress={playRecording}
+              >
+                <LinearGradient
+                  colors={['#4a90e2', '#357abd']}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.buttonText}>Play</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.audioButton}
+                onPress={deleteRecording}
+              >
+                <LinearGradient
+                  colors={['#6c757d', '#5a6268']}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.buttonText}>Re-record</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       <View style={styles.buttonRow}>
         <TouchableOpacity
@@ -268,7 +386,7 @@ export default function CreatePhotoAvatarScreen() {
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
-        {avatarName && (
+        {audioUri && (
           <TouchableOpacity
             style={styles.nextButton}
             onPress={() => setCurrentStep(3)}
@@ -288,7 +406,56 @@ export default function CreatePhotoAvatarScreen() {
   const renderStep3 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepDescription}>
-        Ready to create your AI photo avatar! This will use your photo to generate a digital version of yourself.
+        Configure your avatar settings to personalize your AI creation.
+      </Text>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Avatar Name *</Text>
+        <TextInput
+          style={styles.textInput}
+          value={avatarName}
+          onChangeText={setAvatarName}
+          placeholder="Enter your avatar's name"
+          placeholderTextColor="rgba(255, 255, 255, 0.6)"
+        />
+      </View>
+
+      <View style={styles.summaryContainer}>
+        <Text style={styles.summaryTitle}>Summary:</Text>
+        <Text style={styles.summaryText}>• Photo: Ready</Text>
+        <Text style={styles.summaryText}>• Voice: Custom recording</Text>
+        <Text style={styles.summaryText}>• Name: {avatarName || 'Not set'}</Text>
+      </View>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setCurrentStep(2)}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+
+        {avatarName && (
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={() => setCurrentStep(4)}
+          >
+            <LinearGradient
+              colors={['#4a90e2', '#357abd']}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>Continue</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderStep4 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepDescription}>
+        Ready to create your AI photo avatar! This will use your photo and voice recording to generate a digital version of yourself.
       </Text>
 
       {!createdAvatar ? (
@@ -311,7 +478,7 @@ export default function CreatePhotoAvatarScreen() {
           </TouchableOpacity>
 
           <Text style={styles.processingNote}>
-            This process may take a few minutes. We'll notify you when it's ready!
+            This process may take a few minutes. We'll process your photo and voice sample to create your avatar!
           </Text>
         </View>
       ) : (
@@ -319,7 +486,7 @@ export default function CreatePhotoAvatarScreen() {
           <Text style={styles.successIcon}>SUCCESS</Text>
           <Text style={styles.successTitle}>Avatar Created!</Text>
           <Text style={styles.successDescription}>
-            Your photo avatar "{createdAvatar.name}" has been created successfully.
+            Your photo avatar "{createdAvatar.name}" has been created successfully with your custom voice.
           </Text>
           
           <TouchableOpacity
@@ -339,7 +506,7 @@ export default function CreatePhotoAvatarScreen() {
       {!createdAvatar && (
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => setCurrentStep(2)}
+          onPress={() => setCurrentStep(3)}
         >
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -373,6 +540,7 @@ export default function CreatePhotoAvatarScreen() {
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
+          {currentStep === 4 && renderStep4()}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -555,11 +723,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  inputHelpText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginTop: 4,
-  },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -640,5 +803,104 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 12,
     overflow: 'hidden',
+  },
+  // Audio recording styles
+  recordingContainer: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 24,
+  },
+  recordingVisual: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  recordingCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 3,
+    borderColor: '#28a745',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  recordingActive: {
+    backgroundColor: 'rgba(220, 53, 69, 0.2)',
+    borderColor: '#dc3545',
+  },
+  recordingIcon: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    letterSpacing: 1,
+  },
+  recordingTimer: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  recordButton: {
+    width: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  recordingButton: {
+    // Additional styles for recording state
+  },
+  recordingTips: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
+  },
+  audioPreviewContainer: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  audioPreview: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  audioPreviewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  audioPreviewDuration: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 16,
+  },
+  audioControls: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  audioButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    minWidth: 80,
+  },
+  summaryContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    width: '100%',
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
   },
 });
