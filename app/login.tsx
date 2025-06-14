@@ -1,4 +1,4 @@
-// app/login.tsx (Updated with Backend Integration)
+// app/login.tsx (Production-Ready with proper auth flow)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -19,13 +19,14 @@ import AnimatedBackground from '../components/AnimatedBackground';
 import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
 import { useAuth } from '../context/AuthContext';
+import config from '../constants/config';
 
 // Complete the authentication session
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -51,6 +52,13 @@ export default function LoginScreen() {
     },
     discovery
   );
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.replace('/home');
+    }
+  }, [isAuthenticated, authLoading]);
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -107,49 +115,122 @@ export default function LoginScreen() {
       const userInfo = await userInfoResponse.json();
       
       // Send Google user info to your backend for authentication
-      // This would call your backend's Google auth endpoint
-      console.log('Google User Info:', userInfo);
-      
-      Alert.alert(
-        'Welcome!', 
-        `Hello ${userInfo?.name || 'User'}! You've successfully signed in with Google.`,
-        [
-          { 
-            text: 'Continue', 
-            onPress: () => {
-              router.replace('/home');
-            }
-          }
-        ]
-      );
+      const response = await fetch(`${config.API_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: authentication.accessToken,
+          userInfo: userInfo,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // The AuthContext will handle setting the user and navigating
+        Alert.alert(
+          'Welcome!', 
+          `Hello ${userInfo?.name || 'User'}! You've successfully signed in with Google.`
+        );
+      } else {
+        throw new Error(data.message || 'Google authentication failed');
+      }
     } catch (error) {
-      console.error('Failed to fetch user info:', error);
-      Alert.alert('Error', 'Failed to get user information');
+      console.error('Failed to authenticate with Google:', error);
+      Alert.alert('Error', 'Failed to authenticate with Google');
     } finally {
       setIsGoogleSigninInProgress(false);
     }
   };
 
   const handleEmailLogin = async () => {
-    console.log('=== TESTING BACKEND CONNECTION ===');
-    console.log('Email:', email);
-    console.log('Attempting to connect to backend...');
-    
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
     }
     
+    setIsLoading(true);
+    
     try {
-      // Test backend connection
-      const response = await fetch('http://localhost:5001/api/test');
-      const data = await response.json();
-      console.log('Backend test response:', data);
+      console.log('=== ATTEMPTING LOGIN ===');
+      console.log('Email:', email);
+      console.log('API URL:', config.API_URL);
       
-      Alert.alert('Backend Connection', 'Connected! Check console for details.');
-    } catch (error) {
-      console.error('Backend connection failed:', error);
-      Alert.alert('Backend Connection Failed', 'Cannot connect to backend. Check console.');
+      // First test if backend is reachable with timeout
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const testResponse = await fetch(`${config.API_URL}/api/test`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!testResponse.ok) {
+          throw new Error('Backend not responding');
+        }
+        
+        console.log('Backend connection successful');
+      } catch (connectError: any) {
+        console.error('Backend connection failed:', connectError);
+        
+        let errorMessage = 'Cannot connect to the server. Please check your internet connection and try again.';
+        if (connectError.name === 'AbortError') {
+          errorMessage = 'Connection timeout. The server is taking too long to respond.';
+        }
+        
+        Alert.alert(
+          'Connection Error',
+          errorMessage,
+          [
+            { text: 'OK' }
+          ]
+        );
+        return;
+      }
+      
+      // Use the AuthContext login method for proper authentication
+      await login(email, password);
+      
+      console.log('Login successful');
+      // Navigation will be handled by the useEffect when isAuthenticated becomes true
+      
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      
+      // Handle different types of errors
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message;
+        
+        if (status === 401) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (status === 400) {
+          errorMessage = serverMessage || 'Please check your email and password.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = serverMessage || errorMessage;
+        }
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -178,6 +259,19 @@ export default function LoginScreen() {
     setEmail('');
     setPassword('');
   };
+
+  // Show loading if auth is being checked
+  if (authLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <AnimatedBackground />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -441,5 +535,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textDecorationLine: 'underline',
     opacity: 0.9,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#ffffff',
+    marginTop: 16,
+    fontSize: 16,
   },
 });
