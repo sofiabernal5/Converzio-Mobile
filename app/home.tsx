@@ -1,4 +1,4 @@
-// app/home.tsx (Updated with navigation to avatar selection)
+// app/home.tsx (Updated with calendar navigation)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -52,6 +52,11 @@ export default function HomeScreen() {
   const navigateToAvatarSelection = () => {
     // Navigate to the avatar type selection screen
     router.push('/avatar-selection');
+  };
+
+  const navigateToCalendar = () => {
+    // Navigate to the calendar screen
+    router.push('/calendar');
   };
 
   const createVideoWithAvatar = (avatar: Avatar) => {
@@ -254,7 +259,7 @@ export default function HomeScreen() {
         <View style={styles.bottomToolbar}>
           <TouchableOpacity 
             style={styles.toolbarItem}
-            onPress={() => Alert.alert('Calendar', 'Calendar feature coming soon!')}
+            onPress={navigateToCalendar}
           >
             <View style={styles.toolbarIcon}>
               <View style={styles.calendarIcon}>
