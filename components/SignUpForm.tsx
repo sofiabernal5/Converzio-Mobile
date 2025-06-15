@@ -1,4 +1,4 @@
-// components/SignUpForm.tsx
+// components/SignUpForm.tsx (Without Google OAuth)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -13,8 +13,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 interface SignUpFormProps {
   onToggleMode: () => void;
-  onGoogleSignIn: () => void;
-  isGoogleSigninInProgress: boolean;
 }
 
 interface SignUpData {
@@ -26,11 +24,7 @@ interface SignUpData {
   password: string;
 }
 
-export default function SignUpForm({ 
-  onToggleMode, 
-  onGoogleSignIn, 
-  isGoogleSigninInProgress 
-}: SignUpFormProps) {
+export default function SignUpForm({ onToggleMode }: SignUpFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState<SignUpData>({
     firstName: '',
@@ -108,29 +102,6 @@ export default function SignUpForm({
       </View>
 
       <View style={styles.formContainer}>
-        {/* Google Sign In Button */}
-        <TouchableOpacity
-          style={[styles.googleButton, isGoogleSigninInProgress && styles.disabledButton]}
-          onPress={onGoogleSignIn}
-          disabled={isGoogleSigninInProgress}>
-          <LinearGradient
-            colors={isGoogleSigninInProgress ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <Text style={styles.googleButtonText}>
-            {isGoogleSigninInProgress ? 'Signing in...' : 'Continue with Google'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
-        </View>
-        
         {/* Name Fields */}
         <View style={styles.nameContainer}>
           <TextInput
@@ -255,47 +226,6 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     alignItems: 'center',
-  },
-  googleButton: {
-    width: '100%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  googleButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    width: '100%',
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  dividerText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    paddingHorizontal: 15,
-    fontSize: 14,
   },
   nameContainer: {
     flexDirection: 'row',

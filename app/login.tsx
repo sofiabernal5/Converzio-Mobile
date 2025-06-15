@@ -1,5 +1,5 @@
-// app/login.tsx (Cleaned up with separate SignUp component)
-import React, { useState, useEffect } from 'react';
+// app/login.tsx (Cleaned up without Google OAuth)
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,121 +12,15 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
 import AnimatedBackground from '../components/AnimatedBackground';
 import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
-
-// Complete the authentication session
-WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [isGoogleSigninInProgress, setIsGoogleSigninInProgress] = useState(false);
-
-  // Google OAuth configuration
-  const discovery = {
-    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-    tokenEndpoint: 'https://oauth2.googleapis.com/token',
-    revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-  };
-
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: '688365172283-h7e8uh28lufbsbg6k7svth125l93v5g9.apps.googleusercontent.com',
-      scopes: ['openid', 'profile', 'email'],
-      redirectUri: 'https://auth.expo.io/@sofiabernal/converzio-ios',
-      responseType: AuthSession.ResponseType.Code,
-      extraParams: {
-        access_type: 'offline',
-      },
-    },
-    discovery
-  );
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      setIsGoogleSigninInProgress(true);
-      const { code } = response.params;
-      exchangeCodeForToken(code);
-    } else if (response?.type === 'error') {
-      console.error('Auth error:', response.error);
-      Alert.alert('Authentication Error', response.error?.message || 'Something went wrong');
-      setIsGoogleSigninInProgress(false);
-    }
-  }, [response]);
-
-  const exchangeCodeForToken = async (code: string) => {
-    try {
-      const tokenResponse = await AuthSession.exchangeCodeAsync(
-        {
-          clientId: '688365172283-h7e8uh28lufbsbg6k7svth125l93v5g9.apps.googleusercontent.com',
-          code,
-          extraParams: {
-            code_verifier: request?.codeVerifier || '',
-          },
-          redirectUri: 'https://auth.expo.io/@sofiabernal/converzio-ios',
-        },
-        discovery
-      );
-
-      if (tokenResponse.accessToken) {
-        await handleGoogleAuthSuccess(tokenResponse);
-      }
-    } catch (error) {
-      console.error('Token exchange error:', error);
-      Alert.alert('Error', 'Failed to complete authentication');
-      setIsGoogleSigninInProgress(false);
-    }
-  };
-
-  const handleGoogleAuthSuccess = async (authentication: any) => {
-    try {
-      // Get user info from Google
-      const userInfoResponse = await fetch(
-        'https://www.googleapis.com/oauth2/v2/userinfo',
-        {
-          headers: {
-            Authorization: `Bearer ${authentication.accessToken}`,
-          },
-        }
-      );
-
-      if (!userInfoResponse.ok) {
-        throw new Error('Failed to fetch user info');
-      }
-
-      const userInfo = await userInfoResponse.json();
-      
-      console.log('Google User Info:', userInfo);
-      
-      // Store user info in your app's state/storage here
-      // For example, you might want to save to AsyncStorage or your state management
-      
-      Alert.alert(
-        'Welcome!', 
-        `Hello ${userInfo?.name || 'User'}! You've successfully signed in with Google.`,
-        [
-          { 
-            text: 'Continue', 
-            onPress: () => {
-              // Navigate to home screen
-              router.replace('/home');
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Failed to fetch user info:', error);
-      Alert.alert('Error', 'Failed to get user information');
-    } finally {
-      setIsGoogleSigninInProgress(false);
-    }
-  };
 
   const handleEmailLogin = () => {
     if (!email || !password) {
@@ -139,31 +33,6 @@ export default function LoginScreen() {
       router.replace('/home');
     } else {
       Alert.alert('Error', 'Invalid credentials. Please check your email and password.');
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (!request) {
-      Alert.alert('Error', 'Google authentication is not ready yet. Please try again.');
-      return;
-    }
-
-    try {
-      setIsGoogleSigninInProgress(true);
-      
-      // Debug: Log the redirect URI being used
-      console.log('Redirect URI:', 'https://auth.expo.io/@sofiabernal/converzio-ios');
-      
-      const result = await promptAsync();
-      
-      // The result is handled in the useEffect above
-      if (result.type === 'cancel') {
-        setIsGoogleSigninInProgress(false);
-      }
-    } catch (error) {
-      console.error('Google Sign In Error:', error);
-      Alert.alert('Error', 'Something went wrong with Google sign in');
-      setIsGoogleSigninInProgress(false);
     }
   };
 
@@ -183,11 +52,7 @@ export default function LoginScreen() {
         <View style={styles.centerContent}>
           <View style={styles.contentWrapper}>
             {isSignUp ? (
-              <SignUpForm 
-                onToggleMode={toggleMode}
-                onGoogleSignIn={handleGoogleSignIn}
-                isGoogleSigninInProgress={isGoogleSigninInProgress}
-              />
+              <SignUpForm onToggleMode={toggleMode} />
             ) : (
               <>
                 <View style={styles.header}>
@@ -196,29 +61,6 @@ export default function LoginScreen() {
                 </View>
                 
                 <View style={styles.formContainer}>
-                  {/* Google Sign In Button */}
-                  <TouchableOpacity
-                    style={[styles.googleButton, isGoogleSigninInProgress && styles.disabledButton]}
-                    onPress={handleGoogleSignIn}
-                    disabled={isGoogleSigninInProgress || !request}>
-                    <LinearGradient
-                      colors={isGoogleSigninInProgress ? ['#cccccc', '#999999'] : ['#4285f4', '#34a853']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={StyleSheet.absoluteFill}
-                    />
-                    <Text style={styles.googleButtonText}>
-                      {isGoogleSigninInProgress ? 'Signing in...' : 'Continue with Google'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Divider */}
-                  <View style={styles.dividerContainer}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>or</Text>
-                    <View style={styles.dividerLine} />
-                  </View>
-                  
                   {/* Email/Password Form */}
                   <TextInput
                     style={styles.input}
@@ -330,47 +172,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  googleButton: {
-    width: '100%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  googleButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-    width: '100%',
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  dividerText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    paddingHorizontal: 15,
-    fontSize: 14,
-  },
   input: {
     width: '100%',
     borderWidth: 1,
@@ -385,6 +186,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     alignItems: 'center',
     width: '100%',
+    marginTop: 8,
   },
   buttonWrapper: {
     borderRadius: 25,
@@ -414,16 +216,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     opacity: 0.8,
     fontSize: 14,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 16,
-  },
-  halfInput: {
-    width: '48%',
-    marginBottom: 0,
   },
   smallSignUpButton: {
     marginTop: 12,
