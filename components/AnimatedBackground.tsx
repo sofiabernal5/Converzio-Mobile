@@ -1,7 +1,8 @@
-// components/AnimatedBackground.tsx
+// components/AnimatedBackground.tsx - Updated with new color palette
 import React, { useEffect } from 'react';
 import { StyleSheet, Dimensions, Animated, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Colors from '../constants/Colors';
 
 const { width, height } = Dimensions.get('window');
 
@@ -96,15 +97,15 @@ export const AnimatedBackground: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Main gradient background */}
+      {/* Main gradient background using new colors */}
       <LinearGradient
-        colors={['#1e3c72', '#2a5298', '#4a90e2']}
+        colors={[Colors.primary, Colors.secondary, Colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
       
-      {/* Floating gradient orbs */}
+      {/* Floating gradient orbs with new colors */}
       <Animated.View
         style={[
           styles.floatingOrb1,
@@ -117,7 +118,7 @@ export const AnimatedBackground: React.FC = () => {
           },
         ]}>
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0.2)', 'rgba(255, 255, 255, 0.05)']}
+          colors={[`${Colors.primary}40`, `${Colors.primaryLight}20`]}
           style={styles.orb}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -136,7 +137,7 @@ export const AnimatedBackground: React.FC = () => {
           },
         ]}>
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.03)']}
+          colors={[`${Colors.accent}30`, `${Colors.primary}15`]}
           style={styles.orb}
           start={{ x: 1, y: 0 }}
           end={{ x: 0, y: 1 }}
@@ -155,17 +156,17 @@ export const AnimatedBackground: React.FC = () => {
           },
         ]}>
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.02)']}
+          colors={[`${Colors.primaryLight}25`, `${Colors.accent}10`]}
           style={[styles.orb, styles.smallOrb]}
           start={{ x: 0, y: 1 }}
           end={{ x: 1, y: 0 }}
         />
       </Animated.View>
 
-      {/* Static overlay elements */}
-      <View style={styles.staticOverlay1} />
-      <View style={styles.staticOverlay2} />
-      <View style={styles.staticOverlay3} />
+      {/* Static overlay elements with new colors */}
+      <View style={[styles.staticOverlay1, { backgroundColor: `${Colors.primary}20` }]} />
+      <View style={[styles.staticOverlay2, { backgroundColor: `${Colors.primaryLight}15` }]} />
+      <View style={[styles.staticOverlay3, { backgroundColor: `${Colors.accent}25` }]} />
     </View>
   );
 };
@@ -207,9 +208,8 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: `${Colors.primary}30`,
   },
   staticOverlay2: {
     position: 'absolute',
@@ -218,9 +218,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: `${Colors.primaryLight}25`,
   },
   staticOverlay3: {
     position: 'absolute',
@@ -229,9 +228,8 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: `${Colors.accent}40`,
   },
 });
 
