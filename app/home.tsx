@@ -1,4 +1,4 @@
-// app/home.tsx (Updated with analytics integration)
+// app/home.tsx (Complete version with analytics and leads integration)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -12,6 +12,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AnalyticsService, { AnalyticsSummary } from '../services/AnalyticsService';
+import LeadService, { LeadStats } from '../services/LeadService';
+import LeadCaptureForm from '../components/LeadCaptureForm';
 
 interface UserInfo {
   name?: string;
@@ -32,10 +34,13 @@ export default function HomeScreen() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatars, setUserAvatars] = useState<Avatar[]>([]);
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [leadStats, setLeadStats] = useState<LeadStats | null>(null);
+  const [showLeadForm, setShowLeadForm] = useState(false);
 
   useEffect(() => {
     loadUserData();
     loadAnalyticsSummary();
+    loadLeadStats();
   }, []);
 
   const loadUserData = async () => {
@@ -61,6 +66,15 @@ export default function HomeScreen() {
     }
   };
 
+  const loadLeadStats = async () => {
+    try {
+      const stats = await LeadService.getLeadStats();
+      setLeadStats(stats);
+    } catch (error) {
+      console.error('Error loading lead stats:', error);
+    }
+  };
+
   const navigateToAvatarSelection = () => {
     router.push('/avatar-selection');
   };
@@ -71,6 +85,10 @@ export default function HomeScreen() {
 
   const navigateToAnalytics = () => {
     router.push('/analytics');
+  };
+
+  const navigateToLeads = () => {
+    router.push('/leads');
   };
 
   const createVideoWithAvatar = async (avatar: Avatar) => {
@@ -95,6 +113,7 @@ export default function HomeScreen() {
       
       // Refresh analytics summary
       loadAnalyticsSummary();
+      loadLeadStats();
     } catch (error) {
       console.error('Error creating video:', error);
       Alert.alert('Error', 'Failed to create video. Please try again.');
@@ -165,6 +184,53 @@ export default function HomeScreen() {
     );
   };
 
+  const renderLeadsPreview = () => {
+    if (!leadStats || leadStats.totalLeads === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>📧 Your Leads</Text>
+          <TouchableOpacity onPress={navigateToLeads}>
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity
+          style={styles.leadsPreviewCard}
+          onPress={navigateToLeads}
+        >
+          <LinearGradient
+            colors={['#28a745', '#20c997']}
+            style={styles.leadsGradient}
+          >
+            <View style={styles.leadsGrid}>
+              <View style={styles.leadsItem}>
+                <Text style={styles.leadsNumber}>{leadStats.totalLeads}</Text>
+                <Text style={styles.leadsLabel}>Total Leads</Text>
+              </View>
+              <View style={styles.leadsItem}>
+                <Text style={styles.leadsNumber}>{leadStats.newLeads}</Text>
+                <Text style={styles.leadsLabel}>New</Text>
+              </View>
+              <View style={styles.leadsItem}>
+                <Text style={styles.leadsNumber}>{leadStats.qualifiedLeads}</Text>
+                <Text style={styles.leadsLabel}>Qualified</Text>
+              </View>
+              <View style={styles.leadsItem}>
+                <Text style={styles.leadsNumber}>{leadStats.conversionRate}%</Text>
+                <Text style={styles.leadsLabel}>Conversion</Text>
+              </View>
+            </View>
+            <Text style={styles.leadsFooter}>Tap to manage your leads</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.mainContainer}>
@@ -227,6 +293,25 @@ export default function HomeScreen() {
 
           {/* Analytics Preview */}
           {renderAnalyticsPreview()}
+
+          {/* Leads Preview */}
+          {renderLeadsPreview()}
+
+          {/* Demo Lead Capture Button */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Lead Capture Demo</Text>
+            <TouchableOpacity
+              style={styles.demoButton}
+              onPress={() => setShowLeadForm(true)}
+            >
+              <LinearGradient
+                colors={['#dc3545', '#c82333']}
+                style={styles.demoButtonGradient}
+              >
+                <Text style={styles.demoButtonText}>📝 Try Lead Capture Form</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
 
           {/* My Avatars Section */}
           <View style={styles.section}>
@@ -317,6 +402,15 @@ export default function HomeScreen() {
               
               <View style={styles.featureItem}>
                 <View style={styles.featureText}>
+                  <Text style={styles.featureTitle}>Lead Capture & Management</Text>
+                  <Text style={styles.featureDescription}>
+                    Capture leads through forms and videos, manage contacts, and track conversion rates
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.featureItem}>
+                <View style={styles.featureText}>
                   <Text style={styles.featureTitle}>Two Creation Methods</Text>
                   <Text style={styles.featureDescription}>
                     Choose between quick photo avatars or premium video avatars for different use cases
@@ -369,14 +463,14 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.toolbarItem}
-            onPress={() => Alert.alert('Inbox', 'Inbox feature coming soon!')}
+            onPress={navigateToLeads}
           >
             <View style={styles.toolbarIcon}>
               <View style={styles.inboxIcon}>
                 <View style={styles.envelopeFlap} />
               </View>
             </View>
-            <Text style={styles.toolbarLabel}>Inbox</Text>
+            <Text style={styles.toolbarLabel}>Leads</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -407,6 +501,19 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Lead Capture Form Modal */}
+      <LeadCaptureForm
+        visible={showLeadForm}
+        onClose={() => setShowLeadForm(false)}
+        onLeadCaptured={() => {
+          loadLeadStats();
+          Alert.alert('Success!', 'Demo lead captured successfully!');
+        }}
+        source="form"
+        title="Demo Lead Capture"
+        subtitle="This is how visitors can leave their contact information"
+      />
     </SafeAreaView>
   );
 }
@@ -545,6 +652,69 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  leadsPreviewCard: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  leadsGradient: {
+    padding: 20,
+  },
+  leadsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  leadsItem: {
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  leadsNumber: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  leadsLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  leadsFooter: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  demoButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  demoButtonGradient: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  demoButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   emptyState: {
     alignItems: 'center',

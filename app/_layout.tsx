@@ -19,6 +19,8 @@ export default function RootLayout() {
         <Stack.Screen name="create-video-avatar" />
         <Stack.Screen name="calendar" />
         <Stack.Screen name="analytics" />
+        <Stack.Screen name="leads" />
+        <Stack.Screen name="watch/[videoId]" options={{ headerShown: false }} />
       </Stack>
     </>
   );
