@@ -1,4 +1,4 @@
-// app/home.tsx (Updated with calendar navigation)
+// app/home.tsx (Updated with analytics integration)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import AnalyticsService, { AnalyticsSummary } from '../services/AnalyticsService';
 
 interface UserInfo {
   name?: string;
@@ -30,9 +31,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatars, setUserAvatars] = useState<Avatar[]>([]);
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
 
   useEffect(() => {
     loadUserData();
+    loadAnalyticsSummary();
   }, []);
 
   const loadUserData = async () => {
@@ -49,25 +52,53 @@ export default function HomeScreen() {
     }
   };
 
+  const loadAnalyticsSummary = async () => {
+    try {
+      const summary = await AnalyticsService.getAnalyticsSummary();
+      setAnalyticsSummary(summary);
+    } catch (error) {
+      console.error('Error loading analytics summary:', error);
+    }
+  };
+
   const navigateToAvatarSelection = () => {
-    // Navigate to the avatar type selection screen
     router.push('/avatar-selection');
   };
 
   const navigateToCalendar = () => {
-    // Navigate to the calendar screen
     router.push('/calendar');
   };
 
-  const createVideoWithAvatar = (avatar: Avatar) => {
-    Alert.alert(
-      'Create Video',
-      `Creating a video with ${avatar.name}...`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Continue', onPress: () => console.log('Video creation started') }
-      ]
-    );
+  const navigateToAnalytics = () => {
+    router.push('/analytics');
+  };
+
+  const createVideoWithAvatar = async (avatar: Avatar) => {
+    // Create analytics entry for new video
+    try {
+      const videoTitle = `Video with ${avatar.name}`;
+      const videoId = `video_${Date.now()}`;
+      
+      await AnalyticsService.createVideoAnalytics(videoId, videoTitle);
+      
+      // Simulate video creation and immediate view
+      await AnalyticsService.recordView(videoId, 30, true, 'direct');
+      
+      Alert.alert(
+        'Video Created!',
+        `Video "${videoTitle}" has been created and analytics are being tracked.`,
+        [
+          { text: 'View Analytics', onPress: navigateToAnalytics },
+          { text: 'OK' }
+        ]
+      );
+      
+      // Refresh analytics summary
+      loadAnalyticsSummary();
+    } catch (error) {
+      console.error('Error creating video:', error);
+      Alert.alert('Error', 'Failed to create video. Please try again.');
+    }
   };
 
   const deleteAvatar = (avatarId: string) => {
@@ -84,6 +115,53 @@ export default function HomeScreen() {
           }
         }
       ]
+    );
+  };
+
+  const renderAnalyticsPreview = () => {
+    if (!analyticsSummary || analyticsSummary.totalVideos === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>📊 Your Performance</Text>
+          <TouchableOpacity onPress={navigateToAnalytics}>
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <TouchableOpacity
+          style={styles.analyticsPreviewCard}
+          onPress={navigateToAnalytics}
+        >
+          <LinearGradient
+            colors={['#28a745', '#20c997']}
+            style={styles.analyticsGradient}
+          >
+            <View style={styles.analyticsGrid}>
+              <View style={styles.analyticsItem}>
+                <Text style={styles.analyticsNumber}>{analyticsSummary.totalViews}</Text>
+                <Text style={styles.analyticsLabel}>Total Views</Text>
+              </View>
+              <View style={styles.analyticsItem}>
+                <Text style={styles.analyticsNumber}>{analyticsSummary.totalVideos}</Text>
+                <Text style={styles.analyticsLabel}>Videos</Text>
+              </View>
+              <View style={styles.analyticsItem}>
+                <Text style={styles.analyticsNumber}>{analyticsSummary.averageEngagementRate}%</Text>
+                <Text style={styles.analyticsLabel}>Engagement</Text>
+              </View>
+              <View style={styles.analyticsItem}>
+                <Text style={styles.analyticsNumber}>{analyticsSummary.totalEngagementActions}</Text>
+                <Text style={styles.analyticsLabel}>Interactions</Text>
+              </View>
+            </View>
+            <Text style={styles.analyticsFooter}>Tap to view detailed analytics</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -146,6 +224,9 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Analytics Preview */}
+          {renderAnalyticsPreview()}
 
           {/* My Avatars Section */}
           <View style={styles.section}>
@@ -227,6 +308,15 @@ export default function HomeScreen() {
               
               <View style={styles.featureItem}>
                 <View style={styles.featureText}>
+                  <Text style={styles.featureTitle}>Analytics Dashboard</Text>
+                  <Text style={styles.featureDescription}>
+                    Track video performance with detailed analytics including views, engagement, and watch time
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.featureItem}>
+                <View style={styles.featureText}>
                   <Text style={styles.featureTitle}>Two Creation Methods</Text>
                   <Text style={styles.featureDescription}>
                     Choose between quick photo avatars or premium video avatars for different use cases
@@ -239,15 +329,6 @@ export default function HomeScreen() {
                   <Text style={styles.featureTitle}>Professional Quality</Text>
                   <Text style={styles.featureDescription}>
                     Generate high-quality videos perfect for business and professional use
-                  </Text>
-                </View>
-              </View>
-              
-              <View style={styles.featureItem}>
-                <View style={styles.featureText}>
-                  <Text style={styles.featureTitle}>Fast Generation</Text>
-                  <Text style={styles.featureDescription}>
-                    Create videos in minutes, not hours. Scale your content production effortlessly
                   </Text>
                 </View>
               </View>
@@ -300,7 +381,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.toolbarItem}
-            onPress={() => Alert.alert('Performance', 'Performance metrics coming soon!')}
+            onPress={navigateToAnalytics}
           >
             <View style={styles.toolbarIcon}>
               <View style={styles.chartIcon}>
@@ -309,7 +390,7 @@ export default function HomeScreen() {
                 <View style={[styles.chartBar, { height: 6 }]} />
               </View>
             </View>
-            <Text style={styles.toolbarLabel}>Metrics</Text>
+            <Text style={styles.toolbarLabel}>Analytics</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -365,11 +446,21 @@ const styles = StyleSheet.create({
   section: {
     padding: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 16,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#4a90e2',
+    fontWeight: '600',
   },
   actionGrid: {
     flexDirection: 'row',
@@ -412,6 +503,48 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     opacity: 0.9,
+  },
+  analyticsPreviewCard: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  analyticsGradient: {
+    padding: 20,
+  },
+  analyticsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  analyticsItem: {
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  analyticsNumber: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  analyticsLabel: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  analyticsFooter: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   emptyState: {
     alignItems: 'center',

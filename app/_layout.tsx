@@ -1,4 +1,4 @@
-// app/_layout.tsx
+// app/_layout.tsx (Updated with analytics route)
 import { Stack } from 'expo-router';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
@@ -18,6 +18,7 @@ export default function RootLayout() {
         <Stack.Screen name="create-photo-avatar" />
         <Stack.Screen name="create-video-avatar" />
         <Stack.Screen name="calendar" />
+        <Stack.Screen name="analytics" />
       </Stack>
     </>
   );
