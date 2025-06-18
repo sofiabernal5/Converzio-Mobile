@@ -123,7 +123,7 @@ export default function AvatarSelectionScreen() {
                     styles.featureText,
                     selectedType === 'photo' && styles.selectedFeatureText
                   ]}>
-                    AI-generated voice
+                    Your natural voice
                   </Text>
                 </View>
                 <View style={styles.featureItem}>

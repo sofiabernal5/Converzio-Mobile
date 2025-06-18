@@ -34,6 +34,7 @@ export default function LoginScreen() {
     } else {
       Alert.alert('Error', 'Invalid credentials. Please check your email and password.');
     }
+    //connect query here check for email in table then password
   };
 
   const toggleMode = () => {

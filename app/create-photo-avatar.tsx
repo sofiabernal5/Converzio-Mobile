@@ -1,4 +1,4 @@
-// app/create-photo-avatar.tsx (Clean version without audio recording errors)
+// app/create-photo-avatar.tsx (Fixed MediaTypeOptions deprecation)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -75,8 +75,8 @@ export default function CreatePhotoAvatarScreen() {
         return;
       }
 
+      // Remove mediaTypes since images is the default behavior
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -267,7 +267,7 @@ export default function CreatePhotoAvatarScreen() {
           <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
         ) : (
           <View style={styles.imagePlaceholder}>
-            <Text style={styles.imagePlaceholderIcon}>CAMERA</Text>
+            <Text style={styles.imagePlaceholderIcon}>📷</Text>
             <Text style={styles.imagePlaceholderText}>Tap to select photo</Text>
             <Text style={styles.imagePlaceholderSubtext}>
               Choose a clear, front-facing photo
@@ -310,7 +310,7 @@ export default function CreatePhotoAvatarScreen() {
         <View style={styles.recordingContainer}>
           <View style={styles.recordingVisual}>
             <View style={[styles.recordingCircle, isRecording && styles.recordingActive]}>
-              <Text style={styles.recordingIcon}>MIC</Text>
+              <Text style={styles.recordingIcon}>🎤</Text>
             </View>
             {isRecording && (
               <Text style={styles.recordingTimer}>
@@ -344,7 +344,7 @@ export default function CreatePhotoAvatarScreen() {
       ) : (
         <View style={styles.audioPreviewContainer}>
           <View style={styles.audioPreview}>
-            <Text style={styles.audioPreviewTitle}>Voice Sample Recorded</Text>
+            <Text style={styles.audioPreviewTitle}>Voice Sample Recorded ✅</Text>
             <Text style={styles.audioPreviewDuration}>
               Duration: {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
             </Text>
@@ -358,7 +358,7 @@ export default function CreatePhotoAvatarScreen() {
                   colors={['#4a90e2', '#357abd']}
                   style={styles.buttonGradient}
                 >
-                  <Text style={styles.buttonText}>Play</Text>
+                  <Text style={styles.buttonText}>▶️ Play</Text>
                 </LinearGradient>
               </TouchableOpacity>
               
@@ -370,7 +370,7 @@ export default function CreatePhotoAvatarScreen() {
                   colors={['#6c757d', '#5a6268']}
                   style={styles.buttonGradient}
                 >
-                  <Text style={styles.buttonText}>Re-record</Text>
+                  <Text style={styles.buttonText}>🔄 Re-record</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -383,7 +383,7 @@ export default function CreatePhotoAvatarScreen() {
           style={styles.backButton}
           onPress={() => setCurrentStep(1)}
         >
-          <Text style={styles.backButtonText}>Back</Text>
+          <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
         {audioUri && (
@@ -395,7 +395,7 @@ export default function CreatePhotoAvatarScreen() {
               colors={['#4a90e2', '#357abd']}
               style={styles.buttonGradient}
             >
-              <Text style={styles.buttonText}>Continue</Text>
+              <Text style={styles.buttonText}>Continue →</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -421,10 +421,10 @@ export default function CreatePhotoAvatarScreen() {
       </View>
 
       <View style={styles.summaryContainer}>
-        <Text style={styles.summaryTitle}>Summary:</Text>
-        <Text style={styles.summaryText}>• Photo: Ready</Text>
-        <Text style={styles.summaryText}>• Voice: Custom recording</Text>
-        <Text style={styles.summaryText}>• Name: {avatarName || 'Not set'}</Text>
+        <Text style={styles.summaryTitle}>📋 Summary:</Text>
+        <Text style={styles.summaryText}>• Photo: Ready ✅</Text>
+        <Text style={styles.summaryText}>• Voice: Custom recording ✅</Text>
+        <Text style={styles.summaryText}>• Name: {avatarName || 'Not set ⏳'}</Text>
       </View>
 
       <View style={styles.buttonRow}>
@@ -432,7 +432,7 @@ export default function CreatePhotoAvatarScreen() {
           style={styles.backButton}
           onPress={() => setCurrentStep(2)}
         >
-          <Text style={styles.backButtonText}>Back</Text>
+          <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
         {avatarName && (
@@ -444,7 +444,7 @@ export default function CreatePhotoAvatarScreen() {
               colors={['#4a90e2', '#357abd']}
               style={styles.buttonGradient}
             >
-              <Text style={styles.buttonText}>Continue</Text>
+              <Text style={styles.buttonText}>Continue →</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -470,20 +470,23 @@ export default function CreatePhotoAvatarScreen() {
               style={styles.buttonGradient}
             >
               {isLoading ? (
-                <ActivityIndicator color="#fff" />
+                <>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={[styles.buttonText, { marginLeft: 8 }]}>Creating...</Text>
+                </>
               ) : (
-                <Text style={styles.buttonText}>Create My Avatar</Text>
+                <Text style={styles.buttonText}>🚀 Create My Avatar</Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
 
           <Text style={styles.processingNote}>
-            This process may take a few minutes. We'll process your photo and voice sample to create your avatar!
+            ⏱️ This process may take a few minutes. We'll process your photo and voice sample to create your avatar!
           </Text>
         </View>
       ) : (
         <View style={styles.successContainer}>
-          <Text style={styles.successIcon}>SUCCESS</Text>
+          <Text style={styles.successIcon}>🎉</Text>
           <Text style={styles.successTitle}>Avatar Created!</Text>
           <Text style={styles.successDescription}>
             Your photo avatar "{createdAvatar.name}" has been created successfully with your custom voice.
@@ -497,7 +500,7 @@ export default function CreatePhotoAvatarScreen() {
               colors={['#4a90e2', '#357abd']}
               style={styles.buttonGradient}
             >
-              <Text style={styles.buttonText}>View My Avatars</Text>
+              <Text style={styles.buttonText}>👀 View My Avatars</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -508,7 +511,7 @@ export default function CreatePhotoAvatarScreen() {
           style={styles.backButton}
           onPress={() => setCurrentStep(3)}
         >
-          <Text style={styles.backButtonText}>Back</Text>
+          <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -669,11 +672,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imagePlaceholderIcon: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4a90e2',
+    fontSize: 32,
     marginBottom: 8,
-    letterSpacing: 1,
   },
   imagePlaceholderText: {
     fontSize: 16,
@@ -750,6 +750,8 @@ const styles = StyleSheet.create({
   buttonGradient: {
     paddingVertical: 16,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#ffffff',
@@ -780,11 +782,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   successIcon: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#28a745',
+    fontSize: 48,
     marginBottom: 16,
-    letterSpacing: 2,
   },
   successTitle: {
     fontSize: 24,
@@ -830,10 +829,7 @@ const styles = StyleSheet.create({
     borderColor: '#dc3545',
   },
   recordingIcon: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    letterSpacing: 1,
+    fontSize: 32,
   },
   recordingTimer: {
     fontSize: 24,
@@ -883,7 +879,7 @@ const styles = StyleSheet.create({
   audioButton: {
     borderRadius: 8,
     overflow: 'hidden',
-    minWidth: 80,
+    minWidth: 100,
   },
   summaryContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

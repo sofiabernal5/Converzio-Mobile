@@ -17,6 +17,7 @@ export default function RootLayout() {
         <Stack.Screen name="avatar-selection" />
         <Stack.Screen name="create-photo-avatar" />
         <Stack.Screen name="create-video-avatar" />
+        <Stack.Screen name="calendar" />
       </Stack>
     </>
   );
