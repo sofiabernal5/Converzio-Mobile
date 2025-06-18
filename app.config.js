@@ -8,6 +8,7 @@ export default {
     owner: 'sofiabernal',
     version: '1.0.0',
     orientation: "portrait",
+    icon: "./assets/images/icon.png",
     platforms: ["ios", "android", "web"],
     plugins: ["expo-router"],
     userInterfaceStyle: "light",
