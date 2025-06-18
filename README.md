@@ -1,3 +1,3 @@
 # Convezio-Mobile
 
-This branch is for the calendar functionality on the home page.
+This branch is for implementing mySQL into the code.
