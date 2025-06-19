@@ -120,6 +120,8 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Login endpoint - checks credentials against MySQL
+// Update this login endpoint in your backend/server.js
+
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   
@@ -136,25 +138,40 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     connection = await createConnection();
     
-    // Check if email and password match
-    const loginQuery = `
-      SELECT id, firstName, lastName, phone, company, email, created_at 
+    // Step 1: Check if email exists in database
+    const emailCheckQuery = 'SELECT id, firstName, lastName, email FROM users WHERE email = ? LIMIT 1';
+    const [emailRows] = await connection.execute(emailCheckQuery, [email]);
+
+    if (emailRows.length === 0) {
+      console.log('Email not found:', email);
+      return res.status(401).json({
+        success: false,
+        message: 'Email not found. Please check your email or sign up for an account.'
+      });
+    }
+
+    console.log('Email found:', email);
+
+    // Step 2: Now check if password matches for that email
+    const passwordCheckQuery = `
+      SELECT id, firstName, lastName, email, phone, company, created_at 
       FROM users 
       WHERE email = ? AND password = ? 
       LIMIT 1
     `;
     
-    const [rows] = await connection.execute(loginQuery, [email, password]);
+    const [passwordRows] = await connection.execute(passwordCheckQuery, [email, password]);
 
-    if (rows.length === 0) {
+    if (passwordRows.length === 0) {
+      console.log('Wrong password for email:', email);
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Incorrect password. Please try again.'
       });
     }
 
-    const user = rows[0];
-    console.log('✅ Login successful:', { id: user.id, email: user.email });
+    const user = passwordRows[0];
+    console.log('Login successful:', { id: user.id, email: user.email, name: `${user.firstName} ${user.lastName}` });
     
     res.json({
       success: true,
@@ -170,7 +187,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Login failed: ' + error.message

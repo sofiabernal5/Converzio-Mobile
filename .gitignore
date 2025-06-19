@@ -417,6 +417,7 @@ node_modules/
 # OS or editor junk
 .DS_Store
 .vscode/
+
 # Cache files
 .expo/
 node_modules/

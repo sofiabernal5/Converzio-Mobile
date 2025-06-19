@@ -102,7 +102,7 @@ export default function SignUpForm({ onToggleMode }: SignUpFormProps) {
       }
     } catch (error) {
       console.error('Sign up error:', error);
-      Alert.alert('Error', 'Cannot connect to server. Make sure your backend is running on port 5000.');
+      Alert.alert('Error', 'Cannot connect to server. Make sure your backend is running on port 3001.');
     }
   };
 
