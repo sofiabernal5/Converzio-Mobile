@@ -10,16 +10,8 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-        }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="avatar-selection" />
-        <Stack.Screen name="create-photo-avatar" />
-        <Stack.Screen name="create-video-avatar" />
-        <Stack.Screen name="calendar" />
-      </Stack>
+        }}
+      />
     </>
   );
 }
