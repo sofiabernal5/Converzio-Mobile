@@ -54,7 +54,7 @@ app.get('/api/test-db', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { firstName, lastName, email, phone, company, password } = req.body;
   
-  console.log('📝 Registration attempt:', { firstName, lastName, email, phone, company });
+  console.log('📝 Registration attempt:', { firstName, lastName, phone, company, email });
   
   if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({
@@ -138,7 +138,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     // Check if email and password match
     const loginQuery = `
-      SELECT id, firstName, lastName, email, phone, company, created_at 
+      SELECT id, firstName, lastName, phone, company, email, created_at 
       FROM users 
       WHERE email = ? AND password = ? 
       LIMIT 1
@@ -187,7 +187,7 @@ app.get('/api/users', async (req, res) => {
   let connection;
   try {
     connection = await createConnection();
-    const [rows] = await connection.execute('SELECT id, firstName, lastName, email, phone, company, created_at FROM users');
+    const [rows] = await connection.execute('SELECT id, firstName, lastName, phone, company, email, created_at FROM users');
     
     res.json({
       success: true,

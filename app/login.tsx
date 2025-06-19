@@ -46,15 +46,16 @@ const handleEmailLogin = async () => {
 
     // Insert all the data into the database
     const insertQuery = `
-      INSERT INTO users (name, email, phone, company, password, created_at) 
-      VALUES (?, ?, ?, ?, ?, NOW())
+      INSERT INTO users (firstName, lastName, phone, company, email, password, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, NOW())
     `;
     
     const [result] = await connection.execute(insertQuery, [
-      'Test User',           // name
-      email,                 // email you typed
-      '555-1234',           // phone (test data)
+      'Test',
+      'User',           // name
+      '555-1234', 
       'Test Company',       // company (test data)
+      email,                 // email you typed
       password,             // password you typed
       // created_at is handled by NOW()
       // id is auto-increment so it's automatic
