@@ -410,14 +410,6 @@ export default function ProfileScreen() {
               )}
             </LinearGradient>
           </TouchableOpacity>
-
-          {/* Skip for now button */}
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => router.replace('/home')}
-          >
-            <Text style={styles.skipButtonText}>Skip for now</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -598,16 +590,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  skipButton: {
-    marginTop: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+
 });
