@@ -22,19 +22,61 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleEmailLogin = () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
-    }
+  // Update your handleEmailLogin function in app/login.tsx
+
+const handleEmailLogin = async () => {
+  if (!email || !password) {
+    Alert.alert('Error', 'Please enter both email and password');
+    return;
+  }
+  
+  try {
+    // MySQL connection and insert query
+    const mysql = require('mysql2/promise');
     
-    // Simple validation - in a real app, you'd authenticate with a server
-    if (email.includes('@') && password.length >= 6) {
-      router.replace('/home');
-    } else {
-      Alert.alert('Error', 'Invalid credentials. Please check your email and password.');
-    }
-  };
+    const connection = await mysql.createConnection({
+      host: process.env.MYSQL_HOST,
+      user: process.env.MYSQL_USER, 
+      password: process.env.MYSQL_PASSWORD, // Replace with your real password
+      database: process.env.MYSQL_DB,
+      port: 3306
+    });
+
+    console.log('Connected to database!');
+
+    // Insert all the data into the database
+    const insertQuery = `
+      INSERT INTO users (firstName, lastName, phone, company, email, password, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, NOW())
+    `;
+    
+    const [result] = await connection.execute(insertQuery, [
+      'Test',
+      'User',           // name
+      '555-1234', 
+      'Test Company',       // company (test data)
+      email,                 // email you typed
+      password,             // password you typed
+      // created_at is handled by NOW()
+      // id is auto-increment so it's automatic
+    ]);
+
+    await connection.end();
+
+    console.log('Data inserted successfully! Row ID:', result.insertId);
+    
+    Alert.alert(
+      'Success!', 
+      `Email and password saved to database! Check phpMyAdmin to see your data. Row ID: ${result.insertId}`
+    );
+    
+    router.replace('/home');
+
+  } catch (error) {
+    console.error('Database error:', error);
+    Alert.alert('Database Error', `Failed to save data: ${error.message}`);
+  }
+};
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);

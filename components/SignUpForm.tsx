@@ -1,4 +1,4 @@
-// components/SignUpForm.tsx (Without Google OAuth)
+// components/SignUpForm.tsx (Complete file with backend API)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -67,28 +67,42 @@ export default function SignUpForm({ onToggleMode }: SignUpFormProps) {
     if (!validateForm()) return;
     
     try {
-      // In a real app, you'd send this data to your server
-      console.log('Sign up data:', {
-        ...formData,
-        password: '[HIDDEN]'
+      console.log('Attempting registration with:', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company
       });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      console.log('Registration response:', data);
       
-      Alert.alert(
-        'Success!',
-        'Account created successfully. Welcome to Converzio!',
-        [
-          {
-            text: 'Continue',
-            onPress: () => router.replace('/home')
-          }
-        ]
-      );
+      if (data.success) {
+        Alert.alert(
+          'Success!',
+          'Account created successfully! Check phpMyAdmin to see your data.',
+          [
+            {
+              text: 'Continue',
+              onPress: () => router.replace('/home')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Registration Failed', data.message);
+      }
     } catch (error) {
       console.error('Sign up error:', error);
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      Alert.alert('Error', 'Cannot connect to server. Make sure your backend is running on port 5000.');
     }
   };
 
