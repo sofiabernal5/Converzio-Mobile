@@ -1,4 +1,4 @@
-// components/SignUpForm.tsx (Complete file with backend API)
+// components/SignUpForm.tsx (Updated to store user data after registration)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SignUpFormProps {
   onToggleMode: () => void;
@@ -40,6 +41,15 @@ export default function SignUpForm({ onToggleMode }: SignUpFormProps) {
       ...prev,
       [field]: value
     }));
+  };
+
+  const storeUserData = async (userData: any) => {
+    try {
+      await AsyncStorage.setItem('currentUser', JSON.stringify(userData));
+      console.log('User data stored successfully:', userData);
+    } catch (error) {
+      console.error('Error storing user data:', error);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -87,12 +97,28 @@ export default function SignUpForm({ onToggleMode }: SignUpFormProps) {
       console.log('Registration response:', data);
       
       if (data.success) {
+        // Store user data locally
+        const userData = {
+          id: data.user.id,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.company
+        };
+        await storeUserData(userData);
+        
         Alert.alert(
-          'Success!',
-          'Account created successfully! Check phpMyAdmin to see your data.',
+          'Welcome to Converzio!',
+          'Account created successfully! Let\'s complete your profile to get the most out of your experience.',
           [
             {
-              text: 'Continue',
+              text: 'Complete Profile',
+              onPress: () => router.replace('/profile')
+            },
+            {
+              text: 'Skip for now',
+              style: 'cancel',
               onPress: () => router.replace('/home')
             }
           ]

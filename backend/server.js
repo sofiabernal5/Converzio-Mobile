@@ -1,4 +1,4 @@
-// backend/server.js - Complete file
+// backend/server.js - Updated for registered_users table
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
@@ -50,7 +50,7 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Registration endpoint - saves form data to MySQL
+// Registration endpoint - saves form data to registered_users table
 app.post('/api/auth/register', async (req, res) => {
   const { firstName, lastName, email, phone, company, password } = req.body;
   
@@ -68,7 +68,7 @@ app.post('/api/auth/register', async (req, res) => {
     connection = await createConnection();
     
     // Check if email already exists
-    const checkQuery = 'SELECT id FROM users WHERE email = ? LIMIT 1';
+    const checkQuery = 'SELECT id FROM registered_users WHERE email = ? LIMIT 1';
     const [existing] = await connection.execute(checkQuery, [email]);
     
     if (existing.length > 0) {
@@ -78,19 +78,20 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
-    // Insertion in users table:
+    // Insert into registered_users table with correct field names
     const insertQuery = `
-    INSERT INTO users (firstName, lastName, phone, company, email, password, created_at) 
-    VALUES (?, ?, ?, ?, ?, ?, NOW())
+      INSERT INTO registered_users (first_name, last_name, phone, company_name, email, password, user_type, created) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const [result] = await connection.execute(insertQuery, [
-    firstName,     // First Name from form
-    lastName,      // Last Name from form  
-    phone || '',   // Phone Number from form
-    company || '', // Company from form
-    email,         // Email from form
-    password       // Password from form
+      firstName,           // first_name
+      lastName,            // last_name  
+      phone || '',         // phone
+      company || '',       // company_name
+      email,               // email
+      password,            // password (in production, this should be hashed)
+      'standard'           // user_type default value
     ]);
 
     console.log('✅ User registered successfully:', { id: result.insertId, email });
@@ -119,9 +120,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login endpoint - checks credentials against MySQL
-// Update this login endpoint in your backend/server.js
-
+// Login endpoint - checks credentials against registered_users table
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   
@@ -139,7 +138,7 @@ app.post('/api/auth/login', async (req, res) => {
     connection = await createConnection();
     
     // Step 1: Check if email exists in database
-    const emailCheckQuery = 'SELECT id, firstName, lastName, email FROM users WHERE email = ? LIMIT 1';
+    const emailCheckQuery = 'SELECT id, first_name, last_name, email FROM registered_users WHERE email = ? LIMIT 1';
     const [emailRows] = await connection.execute(emailCheckQuery, [email]);
 
     if (emailRows.length === 0) {
@@ -154,8 +153,9 @@ app.post('/api/auth/login', async (req, res) => {
 
     // Step 2: Now check if password matches for that email
     const passwordCheckQuery = `
-      SELECT id, firstName, lastName, email, phone, company, created_at 
-      FROM users 
+      SELECT id, first_name, last_name, email, phone, company_name, role, photo, 
+             instagram, tiktok, facebook, linkedin, website, user_type, created 
+      FROM registered_users 
       WHERE email = ? AND password = ? 
       LIMIT 1
     `;
@@ -171,18 +171,26 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = passwordRows[0];
-    console.log('Login successful:', { id: user.id, email: user.email, name: `${user.firstName} ${user.lastName}` });
+    console.log('Login successful:', { id: user.id, email: user.email, name: `${user.first_name} ${user.last_name}` });
     
     res.json({
       success: true,
       message: 'Login successful',
       user: {
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: user.first_name,
+        lastName: user.last_name,
         email: user.email,
         phone: user.phone,
-        company: user.company
+        company: user.company_name,
+        role: user.role,
+        photo: user.photo,
+        instagram: user.instagram,
+        tiktok: user.tiktok,
+        facebook: user.facebook,
+        linkedin: user.linkedin,
+        website: user.website,
+        userType: user.user_type
       }
     });
 
@@ -199,12 +207,178 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Get user profile endpoint
+app.get('/api/user/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  let connection;
+  try {
+    connection = await createConnection();
+    const query = `
+      SELECT id, first_name, last_name, email, phone, company_name, role, logo, photo, 
+             instagram, tiktok, facebook, linkedin, website, user_type, created 
+      FROM registered_users 
+      WHERE id = ? 
+      LIMIT 1
+    `;
+    
+    const [rows] = await connection.execute(query, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = rows[0];
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        email: user.email,
+        phone: user.phone,
+        company: user.company_name,
+        role: user.role,
+        logo: user.logo,
+        photo: user.photo,
+        instagram: user.instagram,
+        tiktok: user.tiktok,
+        facebook: user.facebook,
+        linkedin: user.linkedin,
+        website: user.website,
+        userType: user.user_type,
+        created: user.created
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
+// Update user profile endpoint
+app.put('/api/user/:id/profile', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    role, 
+    logo, 
+    photo, 
+    instagram, 
+    tiktok, 
+    facebook, 
+    linkedin, 
+    website 
+  } = req.body;
+  
+  console.log('🔄 Profile update attempt for user:', id);
+  
+  let connection;
+  try {
+    connection = await createConnection();
+    
+    // Build dynamic update query based on provided fields
+    const updateFields = [];
+    const updateValues = [];
+    
+    if (role !== undefined) {
+      updateFields.push('role = ?');
+      updateValues.push(role);
+    }
+    if (logo !== undefined) {
+      updateFields.push('logo = ?');
+      updateValues.push(logo);
+    }
+    if (photo !== undefined) {
+      updateFields.push('photo = ?');
+      updateValues.push(photo);
+    }
+    if (instagram !== undefined) {
+      updateFields.push('instagram = ?');
+      updateValues.push(instagram);
+    }
+    if (tiktok !== undefined) {
+      updateFields.push('tiktok = ?');
+      updateValues.push(tiktok);
+    }
+    if (facebook !== undefined) {
+      updateFields.push('facebook = ?');
+      updateValues.push(facebook);
+    }
+    if (linkedin !== undefined) {
+      updateFields.push('linkedin = ?');
+      updateValues.push(linkedin);
+    }
+    if (website !== undefined) {
+      updateFields.push('website = ?');
+      updateValues.push(website);
+    }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields to update'
+      });
+    }
+    
+    updateValues.push(id);
+    
+    const updateQuery = `
+      UPDATE registered_users 
+      SET ${updateFields.join(', ')} 
+      WHERE id = ?
+    `;
+    
+    const [result] = await connection.execute(updateQuery, updateValues);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    console.log('✅ Profile updated successfully for user:', id);
+    
+    res.json({
+      success: true,
+      message: 'Profile updated successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Profile update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Profile update failed: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
 // Get all users endpoint (for testing)
 app.get('/api/users', async (req, res) => {
   let connection;
   try {
     connection = await createConnection();
-    const [rows] = await connection.execute('SELECT id, firstName, lastName, phone, company, email, created_at FROM users');
+    const [rows] = await connection.execute(`
+      SELECT id, first_name, last_name, phone, company_name, email, role, 
+             instagram, tiktok, facebook, linkedin, website, user_type, created 
+      FROM registered_users 
+      ORDER BY created DESC
+    `);
     
     res.json({
       success: true,

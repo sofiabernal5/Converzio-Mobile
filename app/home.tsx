@@ -1,4 +1,4 @@
-// app/home.tsx (Updated with calendar navigation)
+// app/home.tsx (Updated to load real user data)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -11,10 +11,15 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserInfo {
-  name?: string;
-  email?: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
 }
 
 interface Avatar {
@@ -37,15 +42,23 @@ export default function HomeScreen() {
 
   const loadUserData = async () => {
     try {
-      // Load user data from AsyncStorage or API
-      // const userData = await AsyncStorage.getItem('userInfo');
-      // const avatarData = await AsyncStorage.getItem('userAvatars');
+      const userData = await AsyncStorage.getItem('currentUser');
+      if (userData) {
+        const user = JSON.parse(userData);
+        console.log('Loaded user data in home:', user);
+        setUserInfo(user);
+      } else {
+        console.log('No user data found, redirecting to login');
+        // If no user data, redirect to login
+        router.replace('/login');
+      }
       
-      // Set user data when available
-      // setUserInfo(JSON.parse(userData));
+      // Load avatar data (this would come from your backend in a real app)
+      // const avatarData = await AsyncStorage.getItem('userAvatars');
       // setUserAvatars(JSON.parse(avatarData) || []);
     } catch (error) {
       console.error('Error loading user data:', error);
+      router.replace('/login');
     }
   };
 
@@ -57,6 +70,11 @@ export default function HomeScreen() {
   const navigateToCalendar = () => {
     // Navigate to the calendar screen
     router.push('/calendar');
+  };
+
+  const navigateToProfile = () => {
+    // Navigate to the profile screen
+    router.push('/profile');
   };
 
   const createVideoWithAvatar = (avatar: Avatar) => {
@@ -87,6 +105,13 @@ export default function HomeScreen() {
     );
   };
 
+  const getWelcomeMessage = () => {
+    if (userInfo) {
+      return `Welcome, ${userInfo.firstName}!`;
+    }
+    return 'Welcome!';
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.mainContainer}>
@@ -96,11 +121,16 @@ export default function HomeScreen() {
           style={styles.header}
         >
           <Text style={styles.welcomeText}>
-            Welcome{userInfo?.name ? `, ${userInfo.name}` : ''}!
+            {getWelcomeMessage()}
           </Text>
           <Text style={styles.headerSubtitle}>
             Create amazing videos with AI avatars
           </Text>
+          {userInfo && (
+            <Text style={styles.userCompany}>
+              {userInfo.company}
+            </Text>
+          )}
         </LinearGradient>
 
         {/* White Background Content */}
@@ -288,14 +318,15 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.toolbarItem}
-            onPress={() => Alert.alert('Inbox', 'Inbox feature coming soon!')}
+            onPress={navigateToProfile}
           >
             <View style={styles.toolbarIcon}>
-              <View style={styles.inboxIcon}>
-                <View style={styles.envelopeFlap} />
+              <View style={styles.profileIcon}>
+                <View style={styles.profileHead} />
+                <View style={styles.profileBody} />
               </View>
             </View>
-            <Text style={styles.toolbarLabel}>Inbox</Text>
+            <Text style={styles.toolbarLabel}>Profile</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -361,6 +392,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     opacity: 0.9,
     textAlign: 'center',
+  },
+  userCompany: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   section: {
     padding: 24,
@@ -646,26 +684,27 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
     marginLeft: 2,
   },
-  // Inbox Icon
-  inboxIcon: {
+  // Profile Icon
+  profileIcon: {
     width: 20,
-    height: 14,
-    backgroundColor: '#4a90e2',
-    borderRadius: 2,
-    position: 'relative',
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  envelopeFlap: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#357abd',
-    position: 'absolute',
-    top: 0,
-    left: 0,
+  profileHead: {
+    width: 8,
+    height: 8,
+    backgroundColor: '#4a90e2',
+    borderRadius: 4,
+    marginBottom: 2,
+  },
+  profileBody: {
+    width: 14,
+    height: 8,
+    backgroundColor: '#4a90e2',
+    borderRadius: 7,
+    borderTopLeftRadius: 7,
+    borderTopRightRadius: 7,
   },
   // Chart Icon
   chartIcon: {

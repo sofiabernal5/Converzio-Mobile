@@ -1,4 +1,4 @@
-// app/login.tsx (Updated with backend API - no MySQL in frontend)
+// app/login.tsx (Updated to store user data)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedBackground from '../components/AnimatedBackground';
 import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
@@ -21,6 +22,15 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+
+  const storeUserData = async (userData: any) => {
+    try {
+      await AsyncStorage.setItem('currentUser', JSON.stringify(userData));
+      console.log('User data stored successfully:', userData);
+    } catch (error) {
+      console.error('Error storing user data:', error);
+    }
+  };
 
   const handleEmailLogin = async () => {
     if (!email || !password) {
@@ -43,6 +53,9 @@ export default function LoginScreen() {
       console.log('Login response:', data);
       
       if (data.success) {
+        // Store user data locally
+        await storeUserData(data.user);
+        
         Alert.alert('Success!', `Welcome back, ${data.user.firstName} ${data.user.lastName}!`);
         router.replace('/home');
       } else {
