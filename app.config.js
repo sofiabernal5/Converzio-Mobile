@@ -17,6 +17,13 @@ export default {
           photosPermission: "This app uses photos to let you select profile pictures and avatars.",
           cameraPermission: "This app uses camera to let you take photos for avatars."
         }
+      ],
+      [
+        "expo-video",
+        {
+          supportsBackgroundPlayback: false,
+          supportsPictureInPicture: false
+        }
       ]
     ],
     userInterfaceStyle: "light",
@@ -41,7 +48,8 @@ export default {
       permissions: [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
       ]
     },
     extra: {

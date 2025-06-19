@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedBackground from '../components/AnimatedBackground';
+import { API_BASE_URL } from './config/api';
 
 interface UserProfile {
   id: number;
@@ -86,7 +87,7 @@ export default function ProfileScreen() {
     
     try {
       console.log('Loading profile for user ID:', currentUserId);
-      const response = await fetch(`http://localhost:3001/api/user/${currentUserId}`);
+      const response = await fetch(`${API_BASE_URL}/api/user/${currentUserId}`);
       const data = await response.json();
       
       console.log('Profile API response:', data);

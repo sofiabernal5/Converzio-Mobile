@@ -425,14 +425,16 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
 🚀 Converzio Backend Server Running! 
 Port: ${PORT}
-Health: http://localhost:${PORT}/api/health
+Local: http://localhost:${PORT}/api/health
+Network: http://10.134.171.56:${PORT}/api/health
 Database Test: http://localhost:${PORT}/api/test-db
 Users List: http://localhost:${PORT}/api/users
 Environment: ${process.env.NODE_ENV || 'development'}
+📱 Your phone can now connect to: http://10.134.171.56:${PORT}
   `);
 });
 
