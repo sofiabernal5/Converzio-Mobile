@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 interface UserInfo {
   id: number;
@@ -115,23 +116,23 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.mainContainer}>
-        {/* Header with Blue Gradient */}
-        <LinearGradient
-          colors={['#4a90e2', '#357abd']}
-          style={styles.header}
-        >
-          <Text style={styles.welcomeText}>
-            {getWelcomeMessage()}
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            Create amazing videos with AI avatars
-          </Text>
-          {userInfo && (
-            <Text style={styles.userCompany}>
-              {userInfo.company}
+        {/* Header with AnimatedBackground */}
+        <View style={styles.headerContainer}>
+          <AnimatedBackground />
+          <View style={styles.header}>
+            <Text style={styles.welcomeText}>
+              {getWelcomeMessage()}
             </Text>
-          )}
-        </LinearGradient>
+            <Text style={styles.headerSubtitle}>
+              Create amazing videos with AI avatars
+            </Text>
+            {userInfo && (
+              <Text style={styles.userCompany}>
+                {userInfo.company}
+              </Text>
+            )}
+          </View>
+        </View>
 
         {/* White Background Content */}
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -144,7 +145,7 @@ export default function HomeScreen() {
                 onPress={navigateToAvatarSelection}
               >
                 <LinearGradient
-                  colors={['#4a90e2', '#357abd']}
+                  colors={['#00b5d9', '#4699b3']}
                   style={styles.actionCardGradient}
                 >
                   <Text style={styles.actionTitle}>Create Digital Avatar</Text>
@@ -192,7 +193,7 @@ export default function HomeScreen() {
                   onPress={navigateToAvatarSelection}
                 >
                   <LinearGradient
-                    colors={['#4a90e2', '#357abd']}
+                    colors={['#00b5d9', '#4699b3']}
                     style={styles.createFirstAvatarButtonGradient}
                   >
                     <Text style={styles.createFirstAvatarButtonText}>
@@ -217,7 +218,7 @@ export default function HomeScreen() {
                         onPress={() => createVideoWithAvatar(avatar)}
                       >
                         <LinearGradient
-                          colors={['#4a90e2', '#357abd']}
+                          colors={['#00b5d9', '#4699b3']}
                           style={styles.useAvatarButtonGradient}
                         >
                           <Text style={styles.useAvatarButtonText}>Use Avatar</Text>
@@ -373,10 +374,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  headerContainer: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
   header: {
     padding: 24,
     paddingTop: 20,
     alignItems: 'center',
+    position: 'relative',
+    zIndex: 1,
   },
   welcomeText: {
     fontSize: 24,
@@ -523,7 +530,7 @@ const styles = StyleSheet.create({
   },
   avatarType: {
     fontSize: 14,
-    color: '#4a90e2',
+    color: '#00b5d9',
     marginBottom: 4,
     fontWeight: '500',
   },
@@ -640,13 +647,13 @@ const styles = StyleSheet.create({
   calendarIcon: {
     width: 20,
     height: 20,
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
     borderRadius: 3,
   },
   calendarHeader: {
     width: '100%',
     height: 6,
-    backgroundColor: '#357abd',
+    backgroundColor: '#4699b3',
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
   },
@@ -667,7 +674,7 @@ const styles = StyleSheet.create({
   videoIcon: {
     width: 20,
     height: 16,
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
     borderRadius: 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -694,14 +701,14 @@ const styles = StyleSheet.create({
   profileHead: {
     width: 8,
     height: 8,
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
     borderRadius: 4,
     marginBottom: 2,
   },
   profileBody: {
     width: 14,
     height: 8,
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
     borderRadius: 7,
     borderTopLeftRadius: 7,
     borderTopRightRadius: 7,
@@ -716,7 +723,7 @@ const styles = StyleSheet.create({
   },
   chartBar: {
     width: 4,
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
     borderRadius: 1,
   },
   // Resource Icon
@@ -728,7 +735,7 @@ const styles = StyleSheet.create({
   bookSpine: {
     width: 8,
     height: 18,
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
     borderRadius: 1,
   },
 });
