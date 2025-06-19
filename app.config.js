@@ -16,9 +16,16 @@ export default {
     ],
     ios: {
       bundleIdentifier: "com.sofiabernal.converzio",
-      supportsTablet: true
+      supportsTablet: true,
+      buildNumber: "1.0.0", // Add this
+      infoPlist: {
+        NSCameraUsageDescription: "This app uses camera for [your purpose]",
+        NSMicrophoneUsageDescription: "This app uses microphone for [your purpose]"
+        // Add other permissions as needed
+      }
     },
     android: {
+      package: "com.sofiabernal.converzio",
       adaptiveIcon: {
         backgroundColor: "#ffffff"
       }
