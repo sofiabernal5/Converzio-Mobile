@@ -1,4 +1,4 @@
-// app/avatar-selection.tsx
+// app/avatar-selection.tsx (with debugging)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -10,7 +10,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import AnimatedBackground from '../components/AnimatedBackground';
 
@@ -18,6 +18,7 @@ const { width } = Dimensions.get('window');
 
 export default function AvatarSelectionScreen() {
   const router = useRouter();
+  const segments = useSegments();
   const [selectedType, setSelectedType] = useState<'photo' | 'video' | null>(null);
 
   const handleSelection = (type: 'photo' | 'video') => {
@@ -30,12 +31,47 @@ export default function AvatarSelectionScreen() {
       return;
     }
 
+    // Add debug logging
+    console.log('Current segments:', segments);
+    console.log('Selected type:', selectedType);
+    console.log('Attempting navigation...');
+
     if (selectedType === 'photo') {
-      // Navigate to photo avatar creation (existing HeyGen flow)
-      router.push('/create-photo-avatar');
+      try {
+        console.log('Navigating to: /create-photo-avatar');
+        router.push('/create-photo-avatar');
+      } catch (error) {
+        console.error('Navigation error:', error);
+        
+        // Try alternative navigation methods
+        try {
+          console.log('Trying alternative navigation...');
+          router.navigate('/create-photo-avatar' as any);
+        } catch (error2) {
+          console.error('Alternative navigation failed:', error2);
+          
+          // Show user-friendly error
+          Alert.alert(
+            'Navigation Error', 
+            'Unable to navigate to photo avatar creation. Please try restarting the app.',
+            [
+              { text: 'OK' },
+              { 
+                text: 'Go to Home', 
+                onPress: () => router.push('/home')
+              }
+            ]
+          );
+        }
+      }
     } else {
-      // Navigate to video avatar creation (new flow)
-      router.push('/create-video-avatar');
+      try {
+        console.log('Navigating to: /create-video-avatar');
+        router.push('/create-video-avatar');
+      } catch (error) {
+        console.error('Video avatar navigation error:', error);
+        Alert.alert('Navigation Error', 'Unable to navigate to video avatar creation.');
+      }
     }
   };
 
@@ -43,6 +79,7 @@ export default function AvatarSelectionScreen() {
     router.back();
   };
 
+  // Rest of your component remains exactly the same...
   return (
     <SafeAreaView style={styles.container}>
       <AnimatedBackground />
@@ -64,6 +101,13 @@ export default function AvatarSelectionScreen() {
               Select the type of digital avatar you'd like to create
             </Text>
           </View>
+        </View>
+
+        {/* Debug Info - Remove this after fixing */}
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: 10, margin: 10, borderRadius: 8 }}>
+          <Text style={{ color: 'white', fontSize: 12 }}>
+            Debug Info - Current Route: {segments.join('/')}
+          </Text>
         </View>
 
         {/* Avatar Type Cards */}
@@ -316,6 +360,7 @@ export default function AvatarSelectionScreen() {
   );
 }
 
+// Keep all your existing styles exactly the same
 const styles = StyleSheet.create({
   container: {
     flex: 1,

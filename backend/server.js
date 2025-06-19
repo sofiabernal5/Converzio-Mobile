@@ -1,4 +1,4 @@
-// backend/server.js - Updated for registered_users table
+// backend/server.js - Updated with photo avatars support
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increased limit for base64 images/audio
 
 // Database connection function
 const createConnection = async () => {
@@ -199,6 +199,255 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Login failed: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
+// Create photo avatar endpoint
+app.post('/api/photo-avatars', async (req, res) => {
+  const { userId, avatarName, imageData, audioData, heygenAvatarId, status } = req.body;
+  
+  console.log('Creating photo avatar for user:', userId, 'name:', avatarName);
+  
+  if (!userId || !avatarName) {
+    return res.status(400).json({
+      success: false,
+      message: 'User ID and avatar name are required'
+    });
+  }
+
+  let connection;
+  try {
+    connection = await createConnection();
+    
+    // Verify user exists
+    const userCheckQuery = 'SELECT id FROM registered_users WHERE id = ? LIMIT 1';
+    const [userRows] = await connection.execute(userCheckQuery, [userId]);
+    
+    if (userRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Insert photo avatar
+    const insertQuery = `
+      INSERT INTO photo_avatars (user_id, avatar_name, image_data, audio_data, heygen_avatar_id, status, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, NOW())
+    `;
+
+    const [result] = await connection.execute(insertQuery, [
+      userId,
+      avatarName,
+      imageData || null,
+      audioData || null,
+      heygenAvatarId || null,
+      status || 'created'
+    ]);
+
+    console.log('✅ Photo avatar created:', { id: result.insertId, userId, avatarName });
+
+    res.json({
+      success: true,
+      message: 'Photo avatar created successfully',
+      avatarId: result.insertId
+    });
+
+  } catch (error) {
+    console.error('❌ Photo avatar creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create photo avatar: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
+// Get user's photo avatars endpoint
+app.get('/api/photo-avatars/user/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
+  let connection;
+  try {
+    connection = await createConnection();
+    
+    const query = `
+      SELECT id, avatar_name, heygen_avatar_id, status, created_at, updated_at
+      FROM photo_avatars 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC
+    `;
+    
+    const [rows] = await connection.execute(query, [userId]);
+    
+    res.json({
+      success: true,
+      avatars: rows
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching photo avatars:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch photo avatars: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
+// Get specific photo avatar endpoint
+app.get('/api/photo-avatars/:avatarId', async (req, res) => {
+  const { avatarId } = req.params;
+  
+  let connection;
+  try {
+    connection = await createConnection();
+    
+    const query = `
+      SELECT pa.*, ru.first_name, ru.last_name 
+      FROM photo_avatars pa
+      JOIN registered_users ru ON pa.user_id = ru.id
+      WHERE pa.id = ? 
+      LIMIT 1
+    `;
+    
+    const [rows] = await connection.execute(query, [avatarId]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Photo avatar not found'
+      });
+    }
+
+    const avatar = rows[0];
+    res.json({
+      success: true,
+      avatar: {
+        id: avatar.id,
+        avatarName: avatar.avatar_name,
+        imageData: avatar.image_data,
+        audioData: avatar.audio_data,
+        heygenAvatarId: avatar.heygen_avatar_id,
+        status: avatar.status,
+        createdAt: avatar.created_at,
+        updatedAt: avatar.updated_at,
+        user: {
+          firstName: avatar.first_name,
+          lastName: avatar.last_name
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching photo avatar:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch photo avatar: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
+// Update photo avatar status endpoint
+app.put('/api/photo-avatars/:avatarId/status', async (req, res) => {
+  const { avatarId } = req.params;
+  const { status, heygenAvatarId } = req.body;
+  
+  console.log('🔄 Updating photo avatar status:', avatarId, 'to:', status);
+  
+  if (!status) {
+    return res.status(400).json({
+      success: false,
+      message: 'Status is required'
+    });
+  }
+
+  let connection;
+  try {
+    connection = await createConnection();
+    
+    const updateQuery = `
+      UPDATE photo_avatars 
+      SET status = ?, heygen_avatar_id = COALESCE(?, heygen_avatar_id), updated_at = NOW()
+      WHERE id = ?
+    `;
+    
+    const [result] = await connection.execute(updateQuery, [status, heygenAvatarId, avatarId]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Photo avatar not found'
+      });
+    }
+    
+    console.log('✅ Photo avatar status updated:', avatarId);
+    
+    res.json({
+      success: true,
+      message: 'Photo avatar status updated successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Photo avatar status update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update photo avatar status: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
+// Delete photo avatar endpoint
+app.delete('/api/photo-avatars/:avatarId', async (req, res) => {
+  const { avatarId } = req.params;
+  
+  console.log('🗑️ Deleting photo avatar:', avatarId);
+  
+  let connection;
+  try {
+    connection = await createConnection();
+    
+    const deleteQuery = 'DELETE FROM photo_avatars WHERE id = ?';
+    const [result] = await connection.execute(deleteQuery, [avatarId]);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Photo avatar not found'
+      });
+    }
+    
+    console.log('✅ Photo avatar deleted:', avatarId);
+    
+    res.json({
+      success: true,
+      message: 'Photo avatar deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('❌ Photo avatar deletion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete photo avatar: ' + error.message
     });
   } finally {
     if (connection) {
@@ -397,6 +646,36 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// Get all photo avatars endpoint (for testing)
+app.get('/api/photo-avatars', async (req, res) => {
+  let connection;
+  try {
+    connection = await createConnection();
+    const [rows] = await connection.execute(`
+      SELECT pa.id, pa.avatar_name, pa.status, pa.created_at, 
+             ru.first_name, ru.last_name, ru.email
+      FROM photo_avatars pa
+      JOIN registered_users ru ON pa.user_id = ru.id
+      ORDER BY pa.created_at DESC
+    `);
+    
+    res.json({
+      success: true,
+      avatars: rows
+    });
+  } catch (error) {
+    console.error('❌ Error fetching photo avatars:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch photo avatars: ' + error.message
+    });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
@@ -433,6 +712,7 @@ Local: http://localhost:${PORT}/api/health
 Network: http://10.134.171.56:${PORT}/api/health
 Database Test: http://localhost:${PORT}/api/test-db
 Users List: http://localhost:${PORT}/api/users
+Photo Avatars: http://localhost:${PORT}/api/photo-avatars
 Environment: ${process.env.NODE_ENV || 'development'}
 📱 Your phone can now connect to: http://10.134.171.56:${PORT}
   `);
