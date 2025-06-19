@@ -228,7 +228,8 @@ export default function CalendarScreen() {
     return date.toDateString() === today.toDateString();
   };
 
-  const isSameDate = (date1: Date, date2: Date) => {
+  const isSameDate = (date1: Date | null, date2: Date | null) => {
+    if (!date1 || !date2) return false;
     return date1.toDateString() === date2.toDateString();
   };
 
@@ -283,7 +284,7 @@ export default function CalendarScreen() {
                 style={[
                   styles.dayCell,
                   day && isToday(day) && styles.todayCell,
-                  day && isSameDate(day, selectedDate || new Date()) && styles.selectedDayCell
+                  day && isSameDate(day, selectedDate) && styles.selectedDayCell
                 ]}
                 onPress={() => {
                   if (day) {
@@ -297,7 +298,7 @@ export default function CalendarScreen() {
                     <Text style={[
                       styles.dayNumber,
                       isToday(day) && styles.todayText,
-                      isSameDate(day, selectedDate || new Date()) && styles.selectedDayText
+                      isSameDate(day, selectedDate) && styles.selectedDayText
                     ]}>
                       {day.getDate()}
                     </Text>
@@ -485,7 +486,7 @@ export default function CalendarScreen() {
             </View>
             
             {/* Week view navigation for agenda */}
-            {viewMode === 'week' && (
+            {viewMode === 'week' && agendaDate && (
               <View style={styles.agendaWeekHeader}>
                 {getWeekDays(agendaDate).map((day) => (
                   <TouchableOpacity
