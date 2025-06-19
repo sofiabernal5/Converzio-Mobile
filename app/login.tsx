@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedBackground from '../components/AnimatedBackground';
 import SignUpForm from '../components/SignUpForm';
 import { TextStyles } from '../constants/typography';
+import { API_BASE_URL } from './config/api';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function LoginScreen() {
     try {
       console.log('Attempting login with:', { email });
       
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
