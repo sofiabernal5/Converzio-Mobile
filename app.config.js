@@ -9,7 +9,16 @@ export default {
     version: '1.0.0',
     orientation: "portrait",
     platforms: ["ios", "android", "web"],
-    plugins: ["expo-router"],
+    plugins: [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "This app uses photos to let you select profile pictures and avatars.",
+          cameraPermission: "This app uses camera to let you take photos for avatars."
+        }
+      ]
+    ],
     userInterfaceStyle: "light",
     assetBundlePatterns: [
       "**/*"
@@ -17,18 +26,23 @@ export default {
     ios: {
       bundleIdentifier: "com.sofiabernal.converzio",
       supportsTablet: true,
-      buildNumber: "1.0.0", // Add this
+      buildNumber: "1.0.0",
       infoPlist: {
-        NSCameraUsageDescription: "This app uses camera for [your purpose]",
-        NSMicrophoneUsageDescription: "This app uses microphone for [your purpose]"
-        // Add other permissions as needed
+        NSCameraUsageDescription: "This app uses camera to take photos for avatars and profile pictures.",
+        NSMicrophoneUsageDescription: "This app uses microphone for video recording features.",
+        NSPhotoLibraryUsageDescription: "This app uses photo library to let you select images for avatars and profile pictures."
       }
     },
     android: {
       package: "com.sofiabernal.converzio",
       adaptiveIcon: {
         backgroundColor: "#ffffff"
-      }
+      },
+      permissions: [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     extra: {
       HEYGEN_API_KEY: process.env.HEYGEN_API_KEY,
