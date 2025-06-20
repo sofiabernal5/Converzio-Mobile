@@ -18,10 +18,11 @@ const getApiBaseUrl = () => {
     // Production mode - replace with your production API URL
     return 'https://your-production-api.com';
   }
+  
 };
 
 export const API_BASE_URL = getApiBaseUrl();
-
+console.log('Connecting to backend:', API_BASE_URL);
 // Helper function to test connectivity
 export const testConnection = async (): Promise<boolean> => {
   try {

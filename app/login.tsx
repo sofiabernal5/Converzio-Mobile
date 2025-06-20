@@ -56,7 +56,8 @@ export default function LoginScreen() {
       Alert.alert('Error', 'Please enter both email and password');
       return;
     }
-    
+    console.log('➡️ Sending login request to:', `${API_BASE_URL}/api/auth/login`);
+
     // Check connection first
     if (connectionStatus === 'disconnected') {
       Alert.alert(
