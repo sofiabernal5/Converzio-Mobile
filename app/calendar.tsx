@@ -1,4 +1,4 @@
-// app/calendar.tsx
+// app/calendar.tsx (Updated with new color scheme)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -10,11 +10,13 @@ import {
   Alert,
   Modal,
   TextInput,
+  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -48,11 +50,11 @@ export default function CalendarScreen() {
     endTime: '10:00',
     startAmPm: 'AM' as 'AM' | 'PM',
     endAmPm: 'AM' as 'AM' | 'PM',
-    color: '#4a90e2',
+    color: '#00b5d9',
   });
 
   const eventColors = [
-    '#4a90e2', '#28a745', '#dc3545', '#ffc107', '#6f42c1', '#20c997', '#fd7e14'
+    '#00b5d9', '#4699b3', '#1c3f5b', '#6dd3f0', '#28a745', '#dc3545', '#ffc107'
   ];
 
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function CalendarScreen() {
       endTime: '10:00',
       startAmPm: 'AM',
       endAmPm: 'AM',
-      color: '#4a90e2',
+      color: '#00b5d9',
     });
   };
 
@@ -408,7 +410,7 @@ export default function CalendarScreen() {
             onPress={() => openAddEventModal(currentDate)}
           >
             <LinearGradient
-              colors={['#4a90e2', '#357abd']}
+              colors={['#00b5d9', '#4699b3']}
               style={styles.addEventButtonGradient}
             >
               <Text style={styles.addEventButtonText}>+ Add Event</Text>
@@ -471,66 +473,66 @@ export default function CalendarScreen() {
         onRequestClose={() => setShowAgenda(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <LinearGradient
-            colors={['#4a90e2', '#357abd']}
-            style={styles.modalHeader}
-          >
-            <View style={styles.modalHeaderContent}>
-              <TouchableOpacity onPress={() => setShowAgenda(false)}>
-                <Text style={styles.modalCancelText}>← Back</Text>
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>Day Agenda</Text>
-              <TouchableOpacity onPress={() => openAddEventModal(agendaDate)}>
-                <Text style={styles.modalSaveText}>+ Add</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {/* Week view navigation for agenda */}
-            {viewMode === 'week' && agendaDate && (
-              <View style={styles.agendaWeekHeader}>
-                {getWeekDays(agendaDate).map((day) => (
-                  <TouchableOpacity
-                    key={day.toISOString()}
-                    style={[
-                      styles.agendaWeekDay,
-                      isSameDate(day, agendaDate) && styles.selectedAgendaDay,
-                      isToday(day) && styles.todayAgendaDay
-                    ]}
-                    onPress={() => setAgendaDate(day)}
-                  >
-                    <Text style={[
-                      styles.agendaWeekDayName,
-                      isSameDate(day, agendaDate) && styles.selectedAgendaDayText,
-                      isToday(day) && styles.todayAgendaDayText
-                    ]}>
-                      {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                    </Text>
-                    <Text style={[
-                      styles.agendaWeekDayNumber,
-                      isSameDate(day, agendaDate) && styles.selectedAgendaDayText,
-                      isToday(day) && styles.todayAgendaDayText
-                    ]}>
-                      {day.getDate()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          <View style={styles.modalHeaderContainer}>
+            <AnimatedBackground />
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderContent}>
+                <TouchableOpacity onPress={() => setShowAgenda(false)}>
+                  <Text style={styles.modalCancelText}>← Back</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Day Agenda</Text>
+                <TouchableOpacity onPress={() => openAddEventModal(agendaDate)}>
+                  <Text style={styles.modalSaveText}>+ Add</Text>
+                </TouchableOpacity>
               </View>
-            )}
-            
-            <View style={styles.agendaDateInfo}>
-              <Text style={styles.agendaDateText}>
-                {agendaDate.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </Text>
-              <Text style={styles.agendaEventCount}>
-                {sortedEvents.length} {sortedEvents.length === 1 ? 'event' : 'events'}
-              </Text>
+              
+              {/* Week view navigation for agenda */}
+              {viewMode === 'week' && agendaDate && (
+                <View style={styles.agendaWeekHeader}>
+                  {getWeekDays(agendaDate).map((day) => (
+                    <TouchableOpacity
+                      key={day.toISOString()}
+                      style={[
+                        styles.agendaWeekDay,
+                        isSameDate(day, agendaDate) && styles.selectedAgendaDay,
+                        isToday(day) && styles.todayAgendaDay
+                      ]}
+                      onPress={() => setAgendaDate(day)}
+                    >
+                      <Text style={[
+                        styles.agendaWeekDayName,
+                        isSameDate(day, agendaDate) && styles.selectedAgendaDayText,
+                        isToday(day) && styles.todayAgendaDayText
+                      ]}>
+                        {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </Text>
+                      <Text style={[
+                        styles.agendaWeekDayNumber,
+                        isSameDate(day, agendaDate) && styles.selectedAgendaDayText,
+                        isToday(day) && styles.todayAgendaDayText
+                      ]}>
+                        {day.getDate()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              
+              <View style={styles.agendaDateInfo}>
+                <Text style={styles.agendaDateText}>
+                  {agendaDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </Text>
+                <Text style={styles.agendaEventCount}>
+                  {sortedEvents.length} {sortedEvents.length === 1 ? 'event' : 'events'}
+                </Text>
+              </View>
             </View>
-          </LinearGradient>
+          </View>
 
           <ScrollView style={styles.agendaContent} showsVerticalScrollIndicator={false}>
             {sortedEvents.length === 0 ? (
@@ -547,7 +549,7 @@ export default function CalendarScreen() {
                   }}
                 >
                   <LinearGradient
-                    colors={['#4a90e2', '#357abd']}
+                    colors={['#00b5d9', '#4699b3']}
                     style={styles.addFirstEventButtonGradient}
                   >
                     <Text style={styles.addFirstEventButtonText}>Add First Event</Text>
@@ -605,20 +607,20 @@ export default function CalendarScreen() {
       onRequestClose={() => setShowAddEventModal(false)}
     >
       <SafeAreaView style={styles.modalContainer}>
-        <LinearGradient
-          colors={['#4a90e2', '#357abd']}
-          style={styles.modalHeader}
-        >
-          <View style={styles.modalHeaderContent}>
-            <TouchableOpacity onPress={() => setShowAddEventModal(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Add Event</Text>
-            <TouchableOpacity onPress={addEvent}>
-              <Text style={styles.modalSaveText}>Save</Text>
-            </TouchableOpacity>
+        <View style={styles.modalHeaderContainer}>
+          <AnimatedBackground />
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderContent}>
+              <TouchableOpacity onPress={() => setShowAddEventModal(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Add Event</Text>
+              <TouchableOpacity onPress={addEvent}>
+                <Text style={styles.modalSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </LinearGradient>
+        </View>
 
         <ScrollView style={styles.modalContent}>
           <View style={styles.inputGroup}>
@@ -760,61 +762,63 @@ export default function CalendarScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <LinearGradient
-        colors={['#4a90e2', '#357abd']}
-        style={styles.header}
-      >
-        <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backButton}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Calendar</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+      <View style={styles.mainContainer}>
+        {/* Header with AnimatedBackground */}
+        <View style={styles.headerContainer}>
+          <AnimatedBackground />
+          <View style={styles.header}>
+            <View style={styles.headerTop}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={styles.backButton}>← Back</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Calendar</Text>
+              <View style={styles.headerSpacer} />
+            </View>
 
-        <View style={styles.headerControls}>
-          <TouchableOpacity onPress={() => navigateDate('prev')}>
-            <Text style={styles.navButton}>‹</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.currentDateText}>
-            {viewMode === 'month' && getMonthName(currentDate)}
-            {viewMode === 'week' && `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-            {viewMode === 'day' && currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </Text>
-          
-          <TouchableOpacity onPress={() => navigateDate('next')}>
-            <Text style={styles.navButton}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.viewModeSelector}>
-          {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
-            <TouchableOpacity
-              key={mode}
-              style={[
-                styles.viewModeButton,
-                viewMode === mode && styles.activeViewMode
-              ]}
-              onPress={() => setViewMode(mode)}
-            >
-              <Text style={[
-                styles.viewModeText,
-                viewMode === mode && styles.activeViewModeText
-              ]}>
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            <View style={styles.headerControls}>
+              <TouchableOpacity onPress={() => navigateDate('prev')}>
+                <Text style={styles.navButton}>‹</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.currentDateText}>
+                {viewMode === 'month' && getMonthName(currentDate)}
+                {viewMode === 'week' && `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                {viewMode === 'day' && currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </LinearGradient>
+              
+              <TouchableOpacity onPress={() => navigateDate('next')}>
+                <Text style={styles.navButton}>›</Text>
+              </TouchableOpacity>
+            </View>
 
-      {/* Calendar Content */}
-      <View style={styles.calendarContent}>
-        {viewMode === 'month' && renderMonthView()}
-        {viewMode === 'week' && renderWeekView()}
-        {viewMode === 'day' && renderDayView()}
+            <View style={styles.viewModeSelector}>
+              {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.viewModeButton,
+                    viewMode === mode && styles.activeViewMode
+                  ]}
+                  onPress={() => setViewMode(mode)}
+                >
+                  <Text style={[
+                    styles.viewModeText,
+                    viewMode === mode && styles.activeViewModeText
+                  ]}>
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+
+        {/* Calendar Content */}
+        <View style={styles.calendarContent}>
+          {viewMode === 'month' && renderMonthView()}
+          {viewMode === 'week' && renderWeekView()}
+          {viewMode === 'day' && renderDayView()}
+        </View>
       </View>
 
       {renderAddEventModal()}
@@ -826,12 +830,21 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  headerContainer: {
+    position: 'relative',
+    overflow: 'hidden',
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
+    position: 'relative',
+    zIndex: 1,
   },
   headerTop: {
     flexDirection: 'row',
@@ -848,6 +861,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   headerSpacer: {
     width: 50,
@@ -899,6 +915,7 @@ const styles = StyleSheet.create({
   },
   calendarContent: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   // Month View Styles
   monthContainer: {
@@ -942,10 +959,10 @@ const styles = StyleSheet.create({
   todayCell: {
     backgroundColor: '#e3f2fd',
     borderWidth: 2,
-    borderColor: '#4a90e2',
+    borderColor: '#00b5d9',
   },
   selectedDayCell: {
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
   },
   dayNumber: {
     fontSize: 14,
@@ -954,7 +971,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   todayText: {
-    color: '#4a90e2',
+    color: '#00b5d9',
     fontWeight: 'bold',
   },
   selectedDayText: {
@@ -1115,12 +1132,18 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
+  },
+  modalHeaderContainer: {
+    position: 'relative',
+    overflow: 'hidden',
   },
   modalHeader: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
+    position: 'relative',
+    zIndex: 1,
   },
   modalHeaderContent: {
     flexDirection: 'row',
@@ -1131,6 +1154,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   modalCancelText: {
     color: '#fff',
@@ -1144,6 +1170,7 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#fff',
   },
   inputGroup: {
     marginBottom: 20,
@@ -1201,7 +1228,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   selectedAmPm: {
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#00b5d9',
   },
   amPmText: {
     fontSize: 14,
@@ -1233,7 +1260,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   dateInfoText: {
-    color: '#4a90e2',
+    color: '#00b5d9',
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
@@ -1293,7 +1320,7 @@ const styles = StyleSheet.create({
   },
   agendaContent: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
   },
   noEventsContainer: {
     alignItems: 'center',
@@ -1346,6 +1373,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   agendaEventTime: {
     alignItems: 'flex-end',

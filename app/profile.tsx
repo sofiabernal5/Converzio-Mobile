@@ -1,4 +1,4 @@
-// app/profile.tsx
+// app/profile.tsx (Updated with new color scheme and layout)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -220,12 +220,14 @@ export default function ProfileScreen() {
   if (loading || !currentUserId) {
     return (
       <SafeAreaView style={styles.container}>
-        <AnimatedBackground />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.loadingText}>
-            {!currentUserId ? 'Checking user session...' : 'Loading Profile...'}
-          </Text>
+        <View style={styles.headerContainer}>
+          <AnimatedBackground />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#ffffff" />
+            <Text style={styles.loadingText}>
+              {!currentUserId ? 'Checking user session...' : 'Loading Profile...'}
+            </Text>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -233,186 +235,192 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <AnimatedBackground />
-      
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.headerTitle}>Complete Your Profile</Text>
-          <Text style={styles.headerSubtitle}>
-            Add additional information to enhance your professional presence
-          </Text>
+      <View style={styles.mainContainer}>
+        {/* Header with AnimatedBackground */}
+        <View style={styles.headerContainer}>
+          <AnimatedBackground />
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+            
+            <Text style={styles.headerTitle}>Complete Your Profile</Text>
+            <Text style={styles.headerSubtitle}>
+              Add additional information to enhance your professional presence
+            </Text>
+          </View>
         </View>
 
-        {/* Basic Info Display */}
-        {userProfile && (
-          <View style={styles.basicInfoSection}>
-            <Text style={styles.sectionTitle}>Current Information</Text>
-            <View style={styles.basicInfoCard}>
-              <Text style={styles.basicInfoText}>
-                <Text style={styles.basicInfoLabel}>Name: </Text>
-                {userProfile.firstName} {userProfile.lastName}
-              </Text>
-              <Text style={styles.basicInfoText}>
-                <Text style={styles.basicInfoLabel}>Email: </Text>
-                {userProfile.email}
-              </Text>
-              <Text style={styles.basicInfoText}>
-                <Text style={styles.basicInfoLabel}>Phone: </Text>
-                {userProfile.phone}
-              </Text>
-              <Text style={styles.basicInfoText}>
-                <Text style={styles.basicInfoLabel}>Company: </Text>
-                {userProfile.company}
-              </Text>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Basic Info Display */}
+          {userProfile && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Current Information</Text>
+              <View style={styles.basicInfoCard}>
+                <Text style={styles.basicInfoText}>
+                  <Text style={styles.basicInfoLabel}>Name: </Text>
+                  {userProfile.firstName} {userProfile.lastName}
+                </Text>
+                <Text style={styles.basicInfoText}>
+                  <Text style={styles.basicInfoLabel}>Email: </Text>
+                  {userProfile.email}
+                </Text>
+                <Text style={styles.basicInfoText}>
+                  <Text style={styles.basicInfoLabel}>Phone: </Text>
+                  {userProfile.phone}
+                </Text>
+                <Text style={styles.basicInfoText}>
+                  <Text style={styles.basicInfoLabel}>Company: </Text>
+                  {userProfile.company}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Profile Form */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Additional Information</Text>
+            
+            {/* Profile Photo */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Profile Photo</Text>
+              <TouchableOpacity style={styles.imagePickerButton} onPress={pickProfileImage}>
+                {profileData.photo ? (
+                  <Image source={{ uri: profileData.photo }} style={styles.selectedImage} />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Role */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Professional Role</Text>
+              <TextInput
+                style={styles.textInput}
+                value={profileData.role}
+                onChangeText={(value) => updateField('role', value)}
+                placeholder="e.g. CEO, Marketing Director, Content Creator"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* Company Logo */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Company Logo</Text>
+              <TouchableOpacity style={styles.logoPickerButton} onPress={pickLogoImage}>
+                {profileData.logo ? (
+                  <Image source={{ uri: profileData.logo }} style={styles.selectedLogo} />
+                ) : (
+                  <View style={styles.logoPlaceholder}>
+                    
+                    <Text style={styles.logoPlaceholderText}>Tap to add company logo</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Website */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Website</Text>
+              <TextInput
+                style={styles.textInput}
+                value={profileData.website}
+                onChangeText={(value) => updateField('website', validateWebsite(value))}
+                placeholder="https://yourwebsite.com"
+                placeholderTextColor="#999"
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Social Media Section */}
+            <View style={styles.subsectionContainer}>
+              <Text style={styles.subsectionTitle}>Social Media Profiles</Text>
+              
+              {/* Instagram */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Instagram</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profileData.instagram}
+                  onChangeText={(value) => updateField('instagram', value)}
+                  placeholder="@yourusername or instagram.com/yourusername"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* TikTok */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>TikTok</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profileData.tiktok}
+                  onChangeText={(value) => updateField('tiktok', value)}
+                  placeholder="@yourusername or tiktok.com/@yourusername"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Facebook */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Facebook</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profileData.facebook}
+                  onChangeText={(value) => updateField('facebook', value)}
+                  placeholder="facebook.com/yourpage"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* LinkedIn */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>LinkedIn</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profileData.linkedin}
+                  onChangeText={(value) => updateField('linkedin', value)}
+                  placeholder="linkedin.com/in/yourprofile"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            {/* Save Button */}
+            <View style={styles.saveButtonContainer}>
+              <TouchableOpacity
+                style={[styles.saveButton, saving && styles.disabledButton]}
+                onPress={saveProfile}
+                disabled={saving}
+              >
+                <LinearGradient
+                  colors={saving ? ['#cccccc', '#999999'] : ['#00b5d9', '#4699b3']}
+                  style={styles.saveButtonGradient}
+                >
+                  {saving ? (
+                    <View style={styles.savingContent}>
+                      <ActivityIndicator color="#fff" size="small" />
+                      <Text style={[styles.saveButtonText, { marginLeft: 8 }]}>Saving...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.saveButtonText}>Save Profile</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
-        )}
-
-        {/* Profile Form */}
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Additional Information</Text>
-          
-          {/* Profile Photo */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Profile Photo</Text>
-            <TouchableOpacity style={styles.imagePickerButton} onPress={pickProfileImage}>
-              {profileData.photo ? (
-                <Image source={{ uri: profileData.photo }} style={styles.selectedImage} />
-              ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Text style={styles.imagePlaceholderIcon}>👤</Text>
-                  <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Role */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Professional Role</Text>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.role}
-              onChangeText={(value) => updateField('role', value)}
-              placeholder="e.g. CEO, Marketing Director, Content Creator"
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-            />
-          </View>
-
-          {/* Company Logo */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Company Logo</Text>
-            <TouchableOpacity style={styles.logoPickerButton} onPress={pickLogoImage}>
-              {profileData.logo ? (
-                <Image source={{ uri: profileData.logo }} style={styles.selectedLogo} />
-              ) : (
-                <View style={styles.logoPlaceholder}>
-                  <Text style={styles.logoPlaceholderIcon}>🏢</Text>
-                  <Text style={styles.logoPlaceholderText}>Tap to add company logo</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Website */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Website</Text>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.website}
-              onChangeText={(value) => updateField('website', validateWebsite(value))}
-              placeholder="https://yourwebsite.com"
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-              keyboardType="url"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {/* Social Media Section */}
-          <Text style={styles.subsectionTitle}>Social Media Profiles</Text>
-          
-          {/* Instagram */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Instagram</Text>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.instagram}
-              onChangeText={(value) => updateField('instagram', value)}
-              placeholder="@yourusername or instagram.com/yourusername"
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {/* TikTok */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>TikTok</Text>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.tiktok}
-              onChangeText={(value) => updateField('tiktok', value)}
-              placeholder="@yourusername or tiktok.com/@yourusername"
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {/* Facebook */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Facebook</Text>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.facebook}
-              onChangeText={(value) => updateField('facebook', value)}
-              placeholder="facebook.com/yourpage"
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {/* LinkedIn */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>LinkedIn</Text>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.linkedin}
-              onChangeText={(value) => updateField('linkedin', value)}
-              placeholder="linkedin.com/in/yourprofile"
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {/* Save Button */}
-          <TouchableOpacity
-            style={[styles.saveButton, saving && styles.disabledButton]}
-            onPress={saveProfile}
-            disabled={saving}
-          >
-            <LinearGradient
-              colors={saving ? ['#cccccc', '#999999'] : ['#4a90e2', '#357abd']}
-              style={styles.saveButtonGradient}
-            >
-              {saving ? (
-                <>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={[styles.saveButtonText, { marginLeft: 8 }]}>Saving...</Text>
-                </>
-              ) : (
-                <Text style={styles.saveButtonText}>Save Profile</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -420,24 +428,21 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
-  scrollView: {
+  mainContainer: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#ffffff',
-    fontSize: 16,
-    marginTop: 16,
+  headerContainer: {
+    position: 'relative',
+    overflow: 'hidden',
   },
   header: {
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 20,
     alignItems: 'center',
+    position: 'relative',
+    zIndex: 1,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -464,37 +469,61 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     textAlign: 'center',
   },
-  basicInfoSection: {
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    color: '#ffffff',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  section: {
     padding: 24,
-    paddingTop: 0,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
   },
   basicInfoCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   basicInfoText: {
-    color: '#ffffff',
+    color: '#333',
     fontSize: 14,
     marginBottom: 8,
   },
   basicInfoLabel: {
     fontWeight: 'bold',
+    color: '#00b5d9',
   },
-  formSection: {
-    padding: 24,
-    paddingTop: 0,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 20,
+  subsectionContainer: {
+    marginTop: 20,
   },
   subsectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#ffffff',
+    color: '#333',
     marginTop: 20,
     marginBottom: 16,
   },
@@ -504,28 +533,28 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
+    color: '#333',
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#ddd',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#ffffff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#333',
+    backgroundColor: '#fff',
   },
   imagePickerButton: {
     width: 120,
     height: 120,
     borderRadius: 60,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#00b5d9',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#f8f9ff',
   },
   selectedImage: {
     width: 116,
@@ -540,20 +569,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   imagePlaceholderText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#00b5d9',
     fontSize: 12,
     textAlign: 'center',
+    fontWeight: '500',
   },
   logoPickerButton: {
     width: 100,
     height: 100,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#00b5d9',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#f8f9ff',
   },
   selectedLogo: {
     width: 96,
@@ -568,14 +598,26 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   logoPlaceholderText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#00b5d9',
     fontSize: 10,
     textAlign: 'center',
+    fontWeight: '500',
+  },
+  saveButtonContainer: {
+    marginTop: 32,
+    paddingBottom: 20,
   },
   saveButton: {
-    marginTop: 32,
     borderRadius: 12,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   disabledButton: {
     opacity: 0.6,
@@ -583,13 +625,15 @@ const styles = StyleSheet.create({
   saveButtonGradient: {
     paddingVertical: 16,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
+  },
+  savingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   saveButtonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-
 });

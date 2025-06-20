@@ -1,4 +1,4 @@
-// app/home.tsx (Updated to load real user data)
+// app/home.tsx (Updated to load real user data and include Inbox)
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -76,6 +76,11 @@ export default function HomeScreen() {
   const navigateToProfile = () => {
     // Navigate to the profile screen
     router.push('/profile');
+  };
+
+  const navigateToInbox = () => {
+    // Navigate to the inbox screen
+    router.push('/inbox');
   };
 
   const createVideoWithAvatar = (avatar: Avatar) => {
@@ -319,6 +324,19 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.toolbarItem}
+            onPress={navigateToInbox}
+          >
+            <View style={styles.toolbarIcon}>
+              <View style={styles.inboxIcon}>
+                <View style={styles.envelopeBody} />
+                <View style={styles.envelopeFold} />
+              </View>
+            </View>
+            <Text style={styles.toolbarLabel}>Inbox</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.toolbarItem}
             onPress={navigateToProfile}
           >
             <View style={styles.toolbarIcon}>
@@ -342,19 +360,6 @@ export default function HomeScreen() {
               </View>
             </View>
             <Text style={styles.toolbarLabel}>Metrics</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.toolbarItem}
-            onPress={() => Alert.alert('Resources', 'Resource lounge coming soon!')}
-          >
-            <View style={styles.toolbarIcon}>
-              <View style={styles.resourceIcon}>
-                <View style={styles.bookSpine} />
-                <View style={[styles.bookSpine, { marginLeft: 2 }]} />
-              </View>
-            </View>
-            <Text style={styles.toolbarLabel}>Resources</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -691,6 +696,31 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
     marginLeft: 2,
   },
+  // Inbox Icon
+  inboxIcon: {
+    width: 20,
+    height: 16,
+    position: 'relative',
+  },
+  envelopeBody: {
+    width: 20,
+    height: 16,
+    backgroundColor: '#00b5d9',
+    borderRadius: 2,
+  },
+  envelopeFold: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#4699b3',
+  },
   // Profile Icon
   profileIcon: {
     width: 20,
@@ -723,18 +753,6 @@ const styles = StyleSheet.create({
   },
   chartBar: {
     width: 4,
-    backgroundColor: '#00b5d9',
-    borderRadius: 1,
-  },
-  // Resource Icon
-  resourceIcon: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 18,
-  },
-  bookSpine: {
-    width: 8,
-    height: 18,
     backgroundColor: '#00b5d9',
     borderRadius: 1,
   },
