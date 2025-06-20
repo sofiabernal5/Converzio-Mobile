@@ -47,9 +47,8 @@ export default function CreatePhotoAvatarScreen() {
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Initialize audio recorder and player - Using preset (Alternative)
+  // Initialize audio recorder and player - FIXED: No callback parameters
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-
   const player = useAudioPlayer(recordingUri || '');
 
   useEffect(() => {
@@ -199,7 +198,7 @@ export default function CreatePhotoAvatarScreen() {
       
     } catch (error) {
       console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      Alert.alert('Error', `Failed to start recording: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -215,7 +214,7 @@ export default function CreatePhotoAvatarScreen() {
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
-      Alert.alert('Error', 'Failed to stop recording. Please try again.');
+      Alert.alert('Error', `Failed to stop recording: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -233,7 +232,7 @@ export default function CreatePhotoAvatarScreen() {
       }
     } catch (error) {
       console.error('Error playing recording:', error);
-      Alert.alert('Error', 'Failed to play recording.');
+      Alert.alert('Error', `Failed to play recording: ${error.message || 'Unknown error'}`);
     }
   };
 

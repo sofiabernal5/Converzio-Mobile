@@ -12,10 +12,15 @@ export default {
     plugins: [
       'expo-router',
 
-      // If you need the expo-audio plugin with no options:
-      'expo-audio',
+      // FIXED: expo-audio plugin properly formatted as array
+      [
+        'expo-audio',
+        {
+          microphonePermission: "Allow this app to record audio for voice cloning."
+        }
+      ],
 
-      // Properly configure just expo-image-picker here:
+      // expo-image-picker configuration
       [
         'expo-image-picker',
         {
@@ -26,7 +31,7 @@ export default {
         },
       ],
 
-      // And your video plugin stays as a two-item array:
+      // expo-video plugin configuration
       [
         'expo-video',
         {
