@@ -429,3 +429,5 @@ ios/
 android/
 *.xcworkspace
 *.xcscheme
+
+dist/assets/
