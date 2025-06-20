@@ -709,12 +709,12 @@ app.listen(PORT, '0.0.0.0', () => {
 🚀 Converzio Backend Server Running! 
 Port: ${PORT}
 Local: http://localhost:${PORT}/api/health
-Network: http://10.134.171.56:${PORT}/api/health
-Database Test: http://localhost:${PORT}/api/test-db
-Users List: http://localhost:${PORT}/api/users
-Photo Avatars: http://localhost:${PORT}/api/photo-avatars
+Network: http://10.134.171.18:${PORT}/api/health
+Database Test: http://10.134.171.18:${PORT}/api/test-db
+Users List: http://10.134.171.18:${PORT}/api/users
+Photo Avatars: http://10.134.171.18:${PORT}/api/photo-avatars
 Environment: ${process.env.NODE_ENV || 'development'}
-📱 Your phone can now connect to: http://10.134.171.56:${PORT}
+📱 Your phone can now connect to: http://10.134.171.18:${PORT}
   `);
 });
 

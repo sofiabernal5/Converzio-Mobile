@@ -429,3 +429,23 @@ ios/
 android/
 *.xcworkspace
 *.xcscheme
+
+# Ignore Metro, Expo, or bundler build artifacts with hash-like filenames
+*.bundle
+*.map
+*.tmp
+*.tmp.*
+*.json.*
+*.js.*
+*.ts.*
+*.tsx.*
+*.cjs.*
+*.mjs.*
+*.d.ts.*
+
+# Catch random hash-named output files in any directory
+**/[a-f0-9]{16,}*
+
+dist/assets/
+
+node_modules
