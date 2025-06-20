@@ -37,7 +37,28 @@ export default {
       infoPlist: {
         NSCameraUsageDescription: "This app uses camera to take photos for avatars and profile pictures.",
         NSMicrophoneUsageDescription: "This app uses microphone for video recording features.",
-        NSPhotoLibraryUsageDescription: "This app uses photo library to let you select images for avatars and profile pictures."
+        NSPhotoLibraryUsageDescription: "This app uses photo library to let you select images for avatars and profile pictures.",
+        // Add App Transport Security configuration for local development
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true,
+          NSExceptionDomains: {
+            "10.134.171.18": {
+              NSExceptionAllowsInsecureHTTPLoads: true,
+              NSExceptionMinimumTLSVersion: "1.0",
+              NSIncludesSubdomains: true
+            },
+            "localhost": {
+              NSExceptionAllowsInsecureHTTPLoads: true,
+              NSExceptionMinimumTLSVersion: "1.0",
+              NSIncludesSubdomains: true
+            },
+            "127.0.0.1": {
+              NSExceptionAllowsInsecureHTTPLoads: true,
+              NSExceptionMinimumTLSVersion: "1.0",
+              NSIncludesSubdomains: true
+            }
+          }
+        }
       }
     },
     android: {
@@ -50,7 +71,9 @@ export default {
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "RECORD_AUDIO"
-      ]
+      ],
+      // Add network security config for Android
+      usesCleartextTraffic: true
     },
     extra: {
       HEYGEN_API_KEY: process.env.HEYGEN_API_KEY,
