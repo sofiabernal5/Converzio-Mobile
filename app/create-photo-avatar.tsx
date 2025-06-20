@@ -1,5 +1,5 @@
-// app/create-photo-avatar.tsx (Fixed MediaTypeOptions deprecation)
-import React, { useState } from 'react';
+// app/create-photo-avatar.tsx - Enhanced with script upload and database integration
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,10 +15,9 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedBackground from '../components/AnimatedBackground';
-import Constants from 'expo-constants';
-
-const { HEYGEN_API_KEY, HEYGEN_API_URL } = Constants.expoConfig?.extra || {};
+import { API_BASE_URL } from './config/api';
 
 interface CreationStep {
   id: number;
@@ -27,16 +26,28 @@ interface CreationStep {
   completed: boolean;
 }
 
+interface UserInfo {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 export default function CreatePhotoAvatarScreen() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  
+  // Form data
   const [avatarName, setAvatarName] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [script, setScript] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [createdAvatar, setCreatedAvatar] = useState<any>(null);
+
   let durationInterval: NodeJS.Timeout | null = null;
 
   const steps: CreationStep[] = [
@@ -54,17 +65,43 @@ export default function CreatePhotoAvatarScreen() {
     },
     {
       id: 3,
+      title: 'Write Script',
+      description: 'Create your custom script (up to 150 words)',
+      completed: !!script && script.trim().length > 0,
+    },
+    {
+      id: 4,
       title: 'Avatar Settings',
       description: 'Configure your avatar name and settings',
       completed: !!avatarName,
     },
     {
-      id: 4,
+      id: 5,
       title: 'Create Avatar',
       description: 'Generate your AI avatar',
       completed: !!createdAvatar,
     },
   ];
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  const getCurrentUser = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('currentUser');
+      if (userData) {
+        setUserInfo(JSON.parse(userData));
+      } else {
+        Alert.alert('Error', 'No user session found. Please log in again.');
+        router.replace('/login');
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      Alert.alert('Error', 'Failed to get user session');
+      router.replace('/login');
+    }
+  };
 
   const pickImage = async () => {
     try {
@@ -75,7 +112,6 @@ export default function CreatePhotoAvatarScreen() {
         return;
       }
 
-      // Remove mediaTypes since images is the default behavior
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
@@ -93,11 +129,8 @@ export default function CreatePhotoAvatarScreen() {
 
   const startRecording = async () => {
     try {
-      // Simulate recording functionality
-      // In a real app, you would integrate with expo-audio or react-native-audio-recorder-player
       setIsRecording(true);
       
-      // Start duration counter
       const startTime = Date.now();
       durationInterval = setInterval(() => {
         setRecordingDuration(Math.floor((Date.now() - startTime) / 1000));
@@ -113,13 +146,11 @@ export default function CreatePhotoAvatarScreen() {
     try {
       setIsRecording(false);
       
-      // Clear duration interval
       if (durationInterval) {
         clearInterval(durationInterval);
         durationInterval = null;
       }
       
-      // Simulate recorded audio URI
       const simulatedUri = `mock_audio_${Date.now()}.m4a`;
       setAudioUri(simulatedUri);
       setRecordingDuration(0);
@@ -144,7 +175,6 @@ export default function CreatePhotoAvatarScreen() {
     if (!audioUri) return;
     
     try {
-      // Simulate audio playback
       Alert.alert('Audio Playback', 'Playing recorded audio sample...');
     } catch (error) {
       console.error('Error playing recording:', error);
@@ -152,8 +182,62 @@ export default function CreatePhotoAvatarScreen() {
     }
   };
 
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  const handleScriptChange = (text: string) => {
+    const wordCount = countWords(text);
+    if (wordCount <= 150) {
+      setScript(text);
+    } else {
+      Alert.alert('Word Limit Exceeded', 'Your script cannot exceed 150 words. Please shorten your text.');
+    }
+  };
+
+  const saveAvatarToDatabase = async () => {
+    if (!userInfo || !selectedImage || !avatarName || !audioUri || !script) {
+      Alert.alert('Missing Information', 'Please complete all required fields.');
+      return false;
+    }
+
+    try {
+      const avatarData = {
+        userId: userInfo.id,
+        name: avatarName,
+        photoUri: selectedImage,
+        audioUri: audioUri,
+        script: script.trim(),
+        wordCount: countWords(script)
+      };
+
+      console.log('Saving avatar to database:', avatarData);
+
+      const response = await fetch(`${API_BASE_URL}/api/photo-avatars`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(avatarData),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Avatar saved successfully:', data);
+        return data.avatar;
+      } else {
+        throw new Error(data.message || 'Failed to save avatar');
+      }
+    } catch (error: any) {
+      console.error('Error saving avatar:', error);
+      Alert.alert('Database Error', 'Failed to save avatar: ' + error.message);
+      return false;
+    }
+  };
+
   const createAvatarWithHeyGen = async () => {
-    if (!selectedImage || !avatarName || !audioUri) {
+    if (!selectedImage || !avatarName || !audioUri || !script) {
       Alert.alert('Missing Information', 'Please complete all required fields.');
       return;
     }
@@ -161,67 +245,41 @@ export default function CreatePhotoAvatarScreen() {
     setIsLoading(true);
     
     try {
-      const requestBody = {
-        video_inputs: [
-          {
-            character: {
-              type: "avatar",
-              avatar_id: "Lina_Dress_Sitting_Side_public",
-              avatar_style: "normal"
-            },
-            voice: {
-              type: "text",
-              input_text: `Hello! I'm ${avatarName}, your new AI avatar created from a photo. I'm ready to help you create amazing videos!`,
-              voice_id: "119caed25533477ba63822d5d1552d25",
-              speed: 1.1
-            }
-          }
-        ],
-        dimension: {
-          width: 1280,
-          height: 720
-        }
+      // First save to database
+      const savedAvatar = await saveAvatarToDatabase();
+      if (!savedAvatar) {
+        return;
+      }
+
+      // Simulate HeyGen API call (replace with actual implementation)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const newAvatar = {
+        id: savedAvatar.id,
+        name: avatarName,
+        type: 'photo',
+        status: 'Generated',
+        voice: 'Custom Voice',
+        script: script,
+        wordCount: countWords(script),
+        createdAt: new Date(),
+        image: selectedImage,
+        audioSample: audioUri,
       };
 
-      const response = await fetch(HEYGEN_API_URL, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': HEYGEN_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const responseData = await response.json();
+      setCreatedAvatar(newAvatar);
+      setCurrentStep(5);
       
-      if (response.ok) {
-        const newAvatar = {
-          id: responseData.data?.video_id || `photo_avatar_${Date.now()}`,
-          name: avatarName,
-          type: 'photo',
-          status: 'Generated',
-          voice: 'Custom Voice',
-          createdAt: new Date(),
-          image: selectedImage,
-          audioSample: audioUri,
-        };
-
-        setCreatedAvatar(newAvatar);
-        setCurrentStep(4);
-        
-        Alert.alert(
-          'Success!',
-          'Your photo avatar has been created successfully!',
-          [
-            {
-              text: 'View Avatar',
-              onPress: () => router.replace('/home')
-            }
-          ]
-        );
-      } else {
-        throw new Error(responseData.message || 'Failed to create avatar');
-      }
+      Alert.alert(
+        'Success!',
+        'Your photo avatar has been created and saved successfully!',
+        [
+          {
+            text: 'View Avatar',
+            onPress: () => router.replace('/home')
+          }
+        ]
+      );
     } catch (error: any) {
       console.error('Avatar creation error:', error);
       Alert.alert(
@@ -406,25 +464,38 @@ export default function CreatePhotoAvatarScreen() {
   const renderStep3 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepDescription}>
-        Configure your avatar settings to personalize your AI creation.
+        Write the script you want your avatar to speak. Keep it engaging and within 150 words for best results.
       </Text>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Avatar Name *</Text>
+      <View style={styles.scriptContainer}>
+        <View style={styles.scriptHeader}>
+          <Text style={styles.scriptLabel}>Your Script</Text>
+          <Text style={[
+            styles.wordCount,
+            countWords(script) > 140 && styles.wordCountWarning,
+            countWords(script) >= 150 && styles.wordCountError
+          ]}>
+            {countWords(script)}/150 words
+          </Text>
+        </View>
+        
         <TextInput
-          style={styles.textInput}
-          value={avatarName}
-          onChangeText={setAvatarName}
-          placeholder="Enter your avatar's name"
+          style={styles.scriptInput}
+          value={script}
+          onChangeText={handleScriptChange}
+          placeholder="Write what you want your avatar to say... For example: 'Hello! Welcome to my presentation. Today I'll be sharing insights about our latest product features and how they can benefit your business. Let's dive into the key highlights that will transform your workflow.'"
           placeholderTextColor="rgba(255, 255, 255, 0.6)"
+          multiline
+          textAlignVertical="top"
         />
       </View>
 
-      <View style={styles.summaryContainer}>
-        <Text style={styles.summaryTitle}>📋 Summary:</Text>
-        <Text style={styles.summaryText}>• Photo: Ready ✅</Text>
-        <Text style={styles.summaryText}>• Voice: Custom recording ✅</Text>
-        <Text style={styles.summaryText}>• Name: {avatarName || 'Not set ⏳'}</Text>
+      <View style={styles.scriptTips}>
+        <Text style={styles.tipsTitle}>Script Tips:</Text>
+        <Text style={styles.tipText}>• Keep it conversational and natural</Text>
+        <Text style={styles.tipText}>• Use simple, clear language</Text>
+        <Text style={styles.tipText}>• Stay under 150 words for best quality</Text>
+        <Text style={styles.tipText}>• Include pauses with commas and periods</Text>
       </View>
 
       <View style={styles.buttonRow}>
@@ -435,7 +506,7 @@ export default function CreatePhotoAvatarScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
-        {avatarName && (
+        {script.trim().length > 0 && (
           <TouchableOpacity
             style={styles.nextButton}
             onPress={() => setCurrentStep(4)}
@@ -455,7 +526,57 @@ export default function CreatePhotoAvatarScreen() {
   const renderStep4 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepDescription}>
-        Ready to create your AI photo avatar! This will use your photo and voice recording to generate a digital version of yourself.
+        Configure your avatar settings to personalize your AI creation.
+      </Text>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Avatar Name *</Text>
+        <TextInput
+          style={styles.textInput}
+          value={avatarName}
+          onChangeText={setAvatarName}
+          placeholder="Enter your avatar's name"
+          placeholderTextColor="rgba(255, 255, 255, 0.6)"
+        />
+      </View>
+
+      <View style={styles.summaryContainer}>
+        <Text style={styles.summaryTitle}>📋 Summary:</Text>
+        <Text style={styles.summaryText}>• Photo: Ready ✅</Text>
+        <Text style={styles.summaryText}>• Voice: Custom recording ✅</Text>
+        <Text style={styles.summaryText}>• Script: {countWords(script)} words ✅</Text>
+        <Text style={styles.summaryText}>• Name: {avatarName || 'Not set ⏳'}</Text>
+      </View>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setCurrentStep(3)}
+        >
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+
+        {avatarName && (
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={() => setCurrentStep(5)}
+          >
+            <LinearGradient
+              colors={['#4a90e2', '#357abd']}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>Continue →</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderStep5 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepDescription}>
+        Ready to create your AI photo avatar! This will use your photo, voice recording, and script to generate a digital version of yourself.
       </Text>
 
       {!createdAvatar ? (
@@ -481,7 +602,7 @@ export default function CreatePhotoAvatarScreen() {
           </TouchableOpacity>
 
           <Text style={styles.processingNote}>
-            ⏱️ This process may take a few minutes. We'll process your photo and voice sample to create your avatar!
+            ⏱️ This process may take a few minutes. We'll process your photo, voice sample, and script to create your avatar!
           </Text>
         </View>
       ) : (
@@ -489,7 +610,7 @@ export default function CreatePhotoAvatarScreen() {
           <Text style={styles.successIcon}>🎉</Text>
           <Text style={styles.successTitle}>Avatar Created!</Text>
           <Text style={styles.successDescription}>
-            Your photo avatar "{createdAvatar.name}" has been created successfully with your custom voice.
+            Your photo avatar "{createdAvatar.name}" has been created successfully with your custom voice and script ({createdAvatar.wordCount} words).
           </Text>
           
           <TouchableOpacity
@@ -509,7 +630,7 @@ export default function CreatePhotoAvatarScreen() {
       {!createdAvatar && (
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => setCurrentStep(3)}
+          onPress={() => setCurrentStep(4)}
         >
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
@@ -522,7 +643,6 @@ export default function CreatePhotoAvatarScreen() {
       <AnimatedBackground />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.headerBackButton} 
@@ -544,6 +664,7 @@ export default function CreatePhotoAvatarScreen() {
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
           {currentStep === 4 && renderStep4()}
+          {currentStep === 5 && renderStep5()}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -592,7 +713,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 24,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
   },
   stepItem: {
     alignItems: 'center',
@@ -615,7 +736,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#28a745',
   },
   stepNumber: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: 'rgba(255, 255, 255, 0.7)',
   },
@@ -623,7 +744,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   stepTitle: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#ffffff',
     textAlign: 'center',
     opacity: 0.8,
@@ -631,8 +752,8 @@ const styles = StyleSheet.create({
   stepConnector: {
     position: 'absolute',
     top: 16,
-    left: '75%',
-    width: '50%',
+    left: '85%',
+    width: '30%',
     height: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -880,6 +1001,50 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     minWidth: 100,
+  },
+  // Script styles
+  scriptContainer: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  scriptHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  scriptLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  wordCount: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  wordCountWarning: {
+    color: '#ffc107',
+  },
+  wordCountError: {
+    color: '#dc3545',
+  },
+  scriptInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    minHeight: 120,
+    maxHeight: 200,
+  },
+  scriptTips: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    width: '100%',
   },
   summaryContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

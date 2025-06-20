@@ -1,4 +1,4 @@
-// app/avatar-selection.tsx
+// app/avatar-selection.tsx - Updated to focus only on photo avatars
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -18,25 +18,10 @@ const { width } = Dimensions.get('window');
 
 export default function AvatarSelectionScreen() {
   const router = useRouter();
-  const [selectedType, setSelectedType] = useState<'photo' | 'video' | null>(null);
 
-  const handleSelection = (type: 'photo' | 'video') => {
-    setSelectedType(type);
-  };
-
-  const handleContinue = () => {
-    if (!selectedType) {
-      Alert.alert('Selection Required', 'Please choose an avatar type to continue.');
-      return;
-    }
-
-    if (selectedType === 'photo') {
-      // Navigate to photo avatar creation (existing HeyGen flow)
-      router.push('/create-photo-avatar');
-    } else {
-      // Navigate to video avatar creation (new flow)
-      router.push('/create-video-avatar');
-    }
+  const handleCreateAvatar = () => {
+    // Navigate to photo avatar creation
+    router.push('/create-photo-avatar');
   };
 
   const handleBack = () => {
@@ -59,256 +44,163 @@ export default function AvatarSelectionScreen() {
           </TouchableOpacity>
           
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Choose Avatar Type</Text>
+            <Text style={styles.headerTitle}>Create Your Avatar</Text>
             <Text style={styles.headerSubtitle}>
-              Select the type of digital avatar you'd like to create
+              Transform your photo into an AI-powered digital avatar
             </Text>
           </View>
         </View>
 
-        {/* Avatar Type Cards */}
-        <View style={styles.optionsContainer}>
-          {/* Photo Avatar Option */}
-          <TouchableOpacity
-            style={[
-              styles.optionCard,
-              selectedType === 'photo' && styles.selectedCard
-            ]}
-            onPress={() => handleSelection('photo')}
+        {/* Main Avatar Card */}
+        <View style={styles.avatarCard}>
+          <LinearGradient
+            colors={['#4a90e2', '#357abd']}
+            style={styles.avatarCardGradient}
           >
-            <LinearGradient
-              colors={selectedType === 'photo' 
-                ? ['#4a90e2', '#357abd'] 
-                : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']
-              }
-              style={styles.cardGradient}
-            >
-              <View style={styles.cardIcon}>
-                <Text style={styles.iconText}>PHOTO</Text>
+            <View style={styles.avatarCardContent}>
+              <View style={styles.avatarIcon}>
+                <Text style={styles.avatarIconText}>📸</Text>
               </View>
               
-              <Text style={[
-                styles.cardTitle,
-                selectedType === 'photo' && styles.selectedCardTitle
-              ]}>
-                Photo Avatar
-              </Text>
+              <Text style={styles.avatarTitle}>AI Photo Avatar</Text>
               
-              <Text style={[
-                styles.cardDescription,
-                selectedType === 'photo' && styles.selectedCardDescription
-              ]}>
-                Create an AI avatar from a single photo. Perfect for generating talking head videos with text-to-speech.
+              <Text style={styles.avatarDescription}>
+                Create an AI avatar from a single photo. Perfect for generating professional videos with your own voice and custom scripts.
               </Text>
 
               <View style={styles.featuresList}>
                 <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'photo' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'photo' && styles.selectedFeatureText
-                  ]}>
-                    Upload one clear photo
-                  </Text>
+                  <Text style={styles.featureBullet}>•</Text>
+                  <Text style={styles.featureText}>Upload one clear photo</Text>
                 </View>
                 <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'photo' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'photo' && styles.selectedFeatureText
-                  ]}>
-                    Your natural voice
-                  </Text>
+                  <Text style={styles.featureBullet}>•</Text>
+                  <Text style={styles.featureText}>Record your natural voice</Text>
                 </View>
                 <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'photo' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'photo' && styles.selectedFeatureText
-                  ]}>
-                    Quick setup (5-10 minutes)
-                  </Text>
+                  <Text style={styles.featureBullet}>•</Text>
+                  <Text style={styles.featureText}>Write your custom script (up to 150 words)</Text>
                 </View>
                 <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'photo' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'photo' && styles.selectedFeatureText
-                  ]}>
-                    Best for text-to-speech videos
-                  </Text>
+                  <Text style={styles.featureBullet}>•</Text>
+                  <Text style={styles.featureText}>Quick setup (10-15 minutes)</Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Text style={styles.featureBullet}>•</Text>
+                  <Text style={styles.featureText}>Professional quality results</Text>
                 </View>
               </View>
 
-              <View style={styles.cardFooter}>
-                <Text style={[
-                  styles.recommendedText,
-                  selectedType === 'photo' && styles.selectedRecommendedText
-                ]}>
-                  Recommended for beginners
-                </Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* Video Avatar Option */}
-          <TouchableOpacity
-            style={[
-              styles.optionCard,
-              selectedType === 'video' && styles.selectedCard
-            ]}
-            onPress={() => handleSelection('video')}
-          >
-            <LinearGradient
-              colors={selectedType === 'video' 
-                ? ['#28a745', '#20c997'] 
-                : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']
-              }
-              style={styles.cardGradient}
-            >
-              <View style={styles.cardIcon}>
-                <Text style={styles.iconText}>VIDEO</Text>
-              </View>
-              
-              <Text style={[
-                styles.cardTitle,
-                selectedType === 'video' && styles.selectedCardTitle
-              ]}>
-                Video Avatar
-              </Text>
-              
-              <Text style={[
-                styles.cardDescription,
-                selectedType === 'video' && styles.selectedCardDescription
-              ]}>
-                Create a high-fidelity avatar from video footage. Use your own voice and gestures for maximum authenticity.
-              </Text>
-
-              <View style={styles.featuresList}>
-                <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'video' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'video' && styles.selectedFeatureText
-                  ]}>
-                    Upload 2-5 minute video
-                  </Text>
-                </View>
-                <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'video' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'video' && styles.selectedFeatureText
-                  ]}>
-                    Your natural voice & gestures
-                  </Text>
-                </View>
-                <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'video' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'video' && styles.selectedFeatureText
-                  ]}>
-                    Longer setup (15-30 minutes)
-                  </Text>
-                </View>
-                <View style={styles.featureItem}>
-                  <Text style={[
-                    styles.featureBullet,
-                    selectedType === 'video' && styles.selectedFeatureBullet
-                  ]}>•</Text>
-                  <Text style={[
-                    styles.featureText,
-                    selectedType === 'video' && styles.selectedFeatureText
-                  ]}>
-                    Premium quality results
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.cardFooter}>
-                <Text style={[
-                  styles.recommendedText,
-                  selectedType === 'video' && styles.selectedRecommendedText
-                ]}>
-                  Professional quality
-                </Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={handleCreateAvatar}
+              >
+                <LinearGradient
+                  colors={['#ffffff', '#f0f0f0']}
+                  style={styles.createButtonGradient}
+                >
+                  <Text style={styles.createButtonText}>Create My Avatar</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
         </View>
 
-        {/* Comparison Section */}
-        <View style={styles.comparisonSection}>
-          <Text style={styles.comparisonTitle}>Still deciding?</Text>
-          <View style={styles.comparisonTable}>
-            <View style={styles.comparisonRow}>
-              <Text style={styles.comparisonLabel}>Setup Time:</Text>
-              <Text style={styles.comparisonPhotoValue}>Photo: 5-10 min</Text>
-              <Text style={styles.comparisonVideoValue}>Video: 15-30 min</Text>
+        {/* Process Overview */}
+        <View style={styles.processSection}>
+          <Text style={styles.processSectionTitle}>How It Works</Text>
+          
+          <View style={styles.processSteps}>
+            <View style={styles.processStep}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>1</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepTitle}>Upload Photo</Text>
+                <Text style={styles.stepDescription}>
+                  Choose a clear, front-facing photo of yourself
+                </Text>
+              </View>
             </View>
-            <View style={styles.comparisonRow}>
-              <Text style={styles.comparisonLabel}>Voice Quality:</Text>
-              <Text style={styles.comparisonPhotoValue}>AI Generated</Text>
-              <Text style={styles.comparisonVideoValue}>Your Natural Voice</Text>
+
+            <View style={styles.processStep}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepTitle}>Record Voice</Text>
+                <Text style={styles.stepDescription}>
+                  Record a sample of your voice speaking naturally
+                </Text>
+              </View>
             </View>
-            <View style={styles.comparisonRow}>
-              <Text style={styles.comparisonLabel}>Best For:</Text>
-              <Text style={styles.comparisonPhotoValue}>Quick Content</Text>
-              <Text style={styles.comparisonVideoValue}>Brand Authenticity</Text>
+
+            <View style={styles.processStep}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>3</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepTitle}>Write Script</Text>
+                <Text style={styles.stepDescription}>
+                  Create your custom script (up to 150 words)
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.processStep}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>4</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepTitle}>Generate Avatar</Text>
+                <Text style={styles.stepDescription}>
+                  AI creates your personalized digital avatar
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Continue Button */}
+        {/* Benefits Section */}
+        <View style={styles.benefitsSection}>
+          <Text style={styles.benefitsSectionTitle}>Perfect For</Text>
+          
+          <View style={styles.benefitsList}>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>💼</Text>
+              <Text style={styles.benefitText}>Business professionals creating marketing content</Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>🎓</Text>
+              <Text style={styles.benefitText}>Educators developing online courses</Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>📱</Text>
+              <Text style={styles.benefitText}>Content creators scaling video production</Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <Text style={styles.benefitIcon}>📈</Text>
+              <Text style={styles.benefitText}>Sales teams personalizing outreach</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Get Started Button */}
         <View style={styles.bottomSection}>
           <TouchableOpacity
-            style={[
-              styles.continueButton,
-              !selectedType && styles.disabledButton
-            ]}
-            onPress={handleContinue}
-            disabled={!selectedType}
+            style={styles.getStartedButton}
+            onPress={handleCreateAvatar}
           >
             <LinearGradient
-              colors={selectedType 
-                ? (selectedType === 'photo' ? ['#4a90e2', '#357abd'] : ['#28a745', '#20c997'])
-                : ['#cccccc', '#999999']
-              }
-              style={styles.continueButtonGradient}
+              colors={['#4a90e2', '#357abd']}
+              style={styles.getStartedButtonGradient}
             >
-              <Text style={styles.continueButtonText}>
-                {selectedType 
-                  ? `Continue with ${selectedType === 'photo' ? 'Photo' : 'Video'} Avatar`
-                  : 'Select an Option to Continue'
-                }
-              </Text>
+              <Text style={styles.getStartedButtonText}>Get Started Now</Text>
             </LinearGradient>
           </TouchableOpacity>
 
           <Text style={styles.bottomHelpText}>
-            You can always create additional avatars later from your dashboard
+            Ready to transform your professional branding? Create your first AI avatar now.
           </Text>
         </View>
       </ScrollView>
@@ -360,149 +252,171 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     lineHeight: 22,
   },
-  optionsContainer: {
-    gap: 20,
-    marginBottom: 32,
-  },
-  optionCard: {
-    borderRadius: 16,
+  avatarCard: {
+    borderRadius: 20,
     overflow: 'hidden',
+    marginBottom: 32,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selectedCard: {
-    borderColor: '#ffffff',
-    shadowOpacity: 0.5,
     shadowRadius: 12,
+    elevation: 12,
   },
-  cardGradient: {
-    padding: 24,
-    minHeight: 280,
+  avatarCardGradient: {
+    padding: 32,
   },
-  cardIcon: {
+  avatarCardContent: {
     alignItems: 'center',
-    marginBottom: 16,
   },
-  iconText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'rgba(255, 255, 255, 0.9)',
-    letterSpacing: 1,
+  avatarIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  cardTitle: {
+  avatarIconText: {
+    fontSize: 32,
+  },
+  avatarTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 12,
   },
-  selectedCardTitle: {
-    color: '#ffffff',
-  },
-  cardDescription: {
+  avatarDescription: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 20,
-  },
-  selectedCardDescription: {
-    color: 'rgba(255, 255, 255, 0.95)',
+    marginBottom: 24,
   },
   featuresList: {
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 32,
+    width: '100%',
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
     width: '100%',
   },
   featureBullet: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#ffffff',
     marginRight: 12,
     width: 8,
   },
-  selectedFeatureBullet: {
-    color: '#ffffff',
-  },
   featureText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
     flex: 1,
   },
-  selectedFeatureText: {
-    color: 'rgba(255, 255, 255, 0.95)',
-  },
-  cardFooter: {
-    marginTop: 'auto',
-    paddingTop: 12,
-  },
-  recommendedText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  selectedRecommendedText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-  },
-  comparisonSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  createButton: {
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 32,
+    overflow: 'hidden',
+    width: '100%',
   },
-  comparisonTitle: {
+  createButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  createButtonText: {
+    color: '#4a90e2',
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  processSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 24,
+  },
+  processSectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  comparisonTable: {
-    gap: 12,
+  processSteps: {
+    gap: 20,
   },
-  comparisonRow: {
+  processStep: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  stepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 4,
+    marginRight: 16,
   },
-  comparisonLabel: {
+  stepNumberText: {
     fontSize: 14,
+    fontWeight: 'bold',
     color: '#ffffff',
-    fontWeight: '600',
+  },
+  stepContent: {
     flex: 1,
   },
-  comparisonPhotoValue: {
-    fontSize: 13,
+  stepTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  stepDescription: {
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
-    flex: 1,
+    lineHeight: 20,
+  },
+  benefitsSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 32,
+  },
+  benefitsSectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
     textAlign: 'center',
+    marginBottom: 20,
   },
-  comparisonVideoValue: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
+  benefitsList: {
+    gap: 16,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  benefitIcon: {
+    fontSize: 20,
+    marginRight: 16,
+    width: 32,
+  },
+  benefitText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
     flex: 1,
-    textAlign: 'right',
+    lineHeight: 20,
   },
   bottomSection: {
     alignItems: 'center',
     paddingBottom: 20,
   },
-  continueButton: {
+  getStartedButton: {
     width: '100%',
     borderRadius: 12,
     overflow: 'hidden',
@@ -516,16 +430,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  disabledButton: {
-    shadowOpacity: 0.1,
-    elevation: 2,
-  },
-  continueButtonGradient: {
+  getStartedButtonGradient: {
     paddingVertical: 18,
     paddingHorizontal: 32,
     alignItems: 'center',
   },
-  continueButtonText: {
+  getStartedButtonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
