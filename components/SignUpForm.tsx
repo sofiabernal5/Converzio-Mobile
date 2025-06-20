@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { API_BASE_URL } from '../app/config/api';
 interface SignUpFormProps {
   onToggleMode: () => void;
 }
@@ -85,7 +85,7 @@ export default function SignUpForm({ onToggleMode }: SignUpFormProps) {
         company: formData.company
       });
       
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

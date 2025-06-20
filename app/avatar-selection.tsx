@@ -1,4 +1,4 @@
-// app/avatar-selection.tsx
+// app/avatar-selection.tsx (Fixed navigation issue)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -30,12 +30,30 @@ export default function AvatarSelectionScreen() {
       return;
     }
 
-    if (selectedType === 'photo') {
-      // Navigate to photo avatar creation (existing HeyGen flow)
-      router.push('/create-photo-avatar');
-    } else {
-      // Navigate to video avatar creation (new flow)
-      router.push('/create-video-avatar');
+    console.log('Selected type:', selectedType);
+    console.log('Attempting navigation...');
+
+    try {
+      if (selectedType === 'photo') {
+        console.log('Navigating to: /create-photo-avatar');
+        router.push('/create-photo-avatar');
+      } else if (selectedType === 'video') {
+        console.log('Navigating to: /create-video-avatar');
+        router.push('/create-video-avatar');
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Alert.alert(
+        'Navigation Error', 
+        'Unable to navigate. Please try again.',
+        [
+          { text: 'OK' },
+          { 
+            text: 'Go to Home', 
+            onPress: () => router.push('/home')
+          }
+        ]
+      );
     }
   };
 

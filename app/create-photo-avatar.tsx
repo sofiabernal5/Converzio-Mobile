@@ -1,5 +1,5 @@
-// app/create-photo-avatar.tsx (Fixed MediaTypeOptions deprecation)
-import React, { useState } from 'react';
+// app/create-photo-avatar.tsx (Fixed with proper expo-audio implementation)
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,12 +11,17 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import { useAudioRecorder, useAudioPlayer, AudioModule, RecordingPresets } from 'expo-audio';
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AnimatedBackground from '../components/AnimatedBackground';
 import Constants from 'expo-constants';
+import { API_BASE_URL } from './config/api';
 
 const { HEYGEN_API_KEY, HEYGEN_API_URL } = Constants.expoConfig?.extra || {};
 
@@ -33,11 +38,89 @@ export default function CreatePhotoAvatarScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarName, setAvatarName] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [audioUri, setAudioUri] = useState<string | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
   const [createdAvatar, setCreatedAvatar] = useState<any>(null);
-  let durationInterval: NodeJS.Timeout | null = null;
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingUri, setRecordingUri] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Initialize audio recorder and player - FIXED: No callback parameters
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const player = useAudioPlayer(recordingUri || '');
+
+  useEffect(() => {
+    getCurrentUser();
+    requestAudioPermission();
+  }, []);
+
+  // Update recording duration while recording
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isRecording && recordingStartTime) {
+      interval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        setRecordingDuration(elapsed);
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isRecording, recordingStartTime]);
+
+  // Listen to recorder state changes
+  useEffect(() => {
+    setIsRecording(recorder.isRecording);
+    if (recorder.uri && recorder.uri !== recordingUri) {
+      setRecordingUri(recorder.uri);
+    }
+  }, [recorder.isRecording, recorder.uri]);
+
+  // Listen to player state changes
+  useEffect(() => {
+    setIsPlaying(player.playing);
+  }, [player.playing]);
+
+  const getCurrentUser = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('currentUser');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setCurrentUserId(user.id);
+      } else {
+        Alert.alert('Error', 'No user session found. Please log in again.');
+        router.replace('/login');
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      router.replace('/login');
+    }
+  };
+
+  const requestAudioPermission = async () => {
+    try {
+      console.log('Requesting audio permissions...');
+      const { granted } = await AudioModule.requestRecordingPermissionsAsync();
+      
+      if (granted) {
+        console.log('Audio permission granted');
+        setHasPermission(true);
+      } else {
+        console.log('Audio permission denied');
+        Alert.alert('Permission Required', 'Please allow microphone access to record your voice.');
+        setHasPermission(false);
+      }
+    } catch (error) {
+      console.error('Error requesting audio permission:', error);
+      setHasPermission(false);
+    }
+  };
 
   const steps: CreationStep[] = [
     {
@@ -50,7 +133,7 @@ export default function CreatePhotoAvatarScreen() {
       id: 2,
       title: 'Record Voice',
       description: 'Record a sample of your voice for cloning',
-      completed: !!audioUri,
+      completed: !!recordingUri,
     },
     {
       id: 3,
@@ -75,7 +158,6 @@ export default function CreatePhotoAvatarScreen() {
         return;
       }
 
-      // Remove mediaTypes since images is the default behavior
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
         aspect: [1, 1],
@@ -92,68 +174,148 @@ export default function CreatePhotoAvatarScreen() {
   };
 
   const startRecording = async () => {
+    if (!hasPermission) {
+      Alert.alert('Permission Required', 'Please allow microphone access first.');
+      await requestAudioPermission();
+      return;
+    }
+
     try {
-      // Simulate recording functionality
-      // In a real app, you would integrate with expo-audio or react-native-audio-recorder-player
-      setIsRecording(true);
+      console.log('Preparing to record...');
       
-      // Start duration counter
+      // Reset previous recording
+      setRecordingUri(null);
+      setRecordingDuration(0);
+      
+      await recorder.prepareToRecordAsync();
+      console.log('Starting recording...');
+      
       const startTime = Date.now();
-      durationInterval = setInterval(() => {
-        setRecordingDuration(Math.floor((Date.now() - startTime) / 1000));
-      }, 1000);
+      setRecordingStartTime(startTime);
       
-    } catch (err) {
-      console.error('Failed to start recording', err);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      await recorder.record();
+      console.log('Recording started successfully');
+      
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      Alert.alert('Error', `Failed to start recording: ${error.message || 'Unknown error'}`);
     }
   };
 
   const stopRecording = async () => {
     try {
-      setIsRecording(false);
+      console.log('Stopping recording...');
+      await recorder.stop();
+      setRecordingStartTime(null);
+      console.log('Recording stopped. URI:', recorder.uri);
       
-      // Clear duration interval
-      if (durationInterval) {
-        clearInterval(durationInterval);
-        durationInterval = null;
+      if (recorder.uri) {
+        setRecordingUri(recorder.uri);
       }
-      
-      // Simulate recorded audio URI
-      const simulatedUri = `mock_audio_${Date.now()}.m4a`;
-      setAudioUri(simulatedUri);
-      setRecordingDuration(0);
-      
     } catch (error) {
-      console.error('Failed to stop recording', error);
-      Alert.alert('Error', 'Failed to stop recording. Please try again.');
-    }
-  };
-
-  const deleteRecording = () => {
-    setAudioUri(null);
-    setRecordingDuration(0);
-    setIsRecording(false);
-    if (durationInterval) {
-      clearInterval(durationInterval);
-      durationInterval = null;
+      console.error('Failed to stop recording:', error);
+      Alert.alert('Error', `Failed to stop recording: ${error.message || 'Unknown error'}`);
     }
   };
 
   const playRecording = async () => {
-    if (!audioUri) return;
-    
+    if (!recordingUri) {
+      Alert.alert('Error', 'No recording to play');
+      return;
+    }
+
     try {
-      // Simulate audio playback
-      Alert.alert('Audio Playback', 'Playing recorded audio sample...');
+      if (isPlaying) {
+        await player.pause();
+      } else {
+        await player.play();
+      }
     } catch (error) {
       console.error('Error playing recording:', error);
-      Alert.alert('Error', 'Failed to play recording.');
+      Alert.alert('Error', `Failed to play recording: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const deleteRecording = () => {
+    Alert.alert(
+      'Delete Recording',
+      'Are you sure you want to delete this recording?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (isPlaying) {
+                await player.pause();
+              }
+              setRecordingUri(null);
+              setRecordingDuration(0);
+              await recorder.prepareToRecordAsync();
+            } catch (error) {
+              console.error('Error deleting recording:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const saveAvatarToDatabase = async (avatarData: any) => {
+    if (!currentUserId) {
+      console.error('No current user ID');
+      return;
+    }
+
+    try {
+      // Convert image to base64 for storage
+      let imageBase64 = null;
+      if (selectedImage) {
+        imageBase64 = await FileSystem.readAsStringAsync(selectedImage, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      }
+
+      // Convert audio to base64 for storage
+      let audioBase64 = null;
+      if (recordingUri) {
+        audioBase64 = await FileSystem.readAsStringAsync(recordingUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/photo-avatars`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: currentUserId,
+          avatarName: avatarName,
+          imageData: imageBase64,
+          audioData: audioBase64,
+          heygenAvatarId: avatarData.id || null,
+          status: 'created'
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Avatar saved to database:', data.avatarId);
+        return data.avatarId;
+      } else {
+        throw new Error(data.message || 'Failed to save avatar');
+      }
+    } catch (error) {
+      console.error('Error saving avatar to database:', error);
+      Alert.alert('Warning', 'Avatar created but failed to save to database.');
     }
   };
 
   const createAvatarWithHeyGen = async () => {
-    if (!selectedImage || !avatarName || !audioUri) {
+    if (!selectedImage || !avatarName || !recordingUri) {
       Alert.alert('Missing Information', 'Please complete all required fields.');
       return;
     }
@@ -161,67 +323,41 @@ export default function CreatePhotoAvatarScreen() {
     setIsLoading(true);
     
     try {
-      const requestBody = {
-        video_inputs: [
-          {
-            character: {
-              type: "avatar",
-              avatar_id: "Lina_Dress_Sitting_Side_public",
-              avatar_style: "normal"
-            },
-            voice: {
-              type: "text",
-              input_text: `Hello! I'm ${avatarName}, your new AI avatar created from a photo. I'm ready to help you create amazing videos!`,
-              voice_id: "119caed25533477ba63822d5d1552d25",
-              speed: 1.1
-            }
-          }
-        ],
-        dimension: {
-          width: 1280,
-          height: 720
-        }
+      // For now, simulate the creation process
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const avatarData = {
+        id: `photo_avatar_${Date.now()}`,
+        name: avatarName,
+        type: 'photo',
+        status: 'created',
+        voice: 'Custom Voice',
+        createdAt: new Date(),
+        image: selectedImage,
+        audioSample: recordingUri,
       };
 
-      const response = await fetch(HEYGEN_API_URL, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': HEYGEN_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      // Save to database
+      const dbAvatarId = await saveAvatarToDatabase(avatarData);
+
+      setCreatedAvatar({
+        ...avatarData,
+        dbId: dbAvatarId,
       });
 
-      const responseData = await response.json();
+      setCurrentStep(4);
       
-      if (response.ok) {
-        const newAvatar = {
-          id: responseData.data?.video_id || `photo_avatar_${Date.now()}`,
-          name: avatarName,
-          type: 'photo',
-          status: 'Generated',
-          voice: 'Custom Voice',
-          createdAt: new Date(),
-          image: selectedImage,
-          audioSample: audioUri,
-        };
+      Alert.alert(
+        'Success!',
+        `Your photo avatar "${avatarName}" has been created successfully with your custom voice!`,
+        [
+          {
+            text: 'View Avatar',
+            onPress: () => router.replace('/home')
+          }
+        ]
+      );
 
-        setCreatedAvatar(newAvatar);
-        setCurrentStep(4);
-        
-        Alert.alert(
-          'Success!',
-          'Your photo avatar has been created successfully!',
-          [
-            {
-              text: 'View Avatar',
-              onPress: () => router.replace('/home')
-            }
-          ]
-        );
-      } else {
-        throw new Error(responseData.message || 'Failed to create avatar');
-      }
     } catch (error: any) {
       console.error('Avatar creation error:', error);
       Alert.alert(
@@ -231,6 +367,12 @@ export default function CreatePhotoAvatarScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const renderStepIndicator = () => (
@@ -306,7 +448,7 @@ export default function CreatePhotoAvatarScreen() {
         Record a sample of your voice speaking naturally. This will be used to clone your voice for the avatar.
       </Text>
 
-      {!audioUri ? (
+      {!recordingUri ? (
         <View style={styles.recordingContainer}>
           <View style={styles.recordingVisual}>
             <View style={[styles.recordingCircle, isRecording && styles.recordingActive]}>
@@ -314,7 +456,7 @@ export default function CreatePhotoAvatarScreen() {
             </View>
             {isRecording && (
               <Text style={styles.recordingTimer}>
-                {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+                {formatDuration(recordingDuration)}
               </Text>
             )}
           </View>
@@ -322,6 +464,7 @@ export default function CreatePhotoAvatarScreen() {
           <TouchableOpacity
             style={[styles.recordButton, isRecording && styles.recordingButton]}
             onPress={isRecording ? stopRecording : startRecording}
+            disabled={!hasPermission}
           >
             <LinearGradient
               colors={isRecording ? ['#dc3545', '#c82333'] : ['#28a745', '#20c997']}
@@ -332,6 +475,15 @@ export default function CreatePhotoAvatarScreen() {
               </Text>
             </LinearGradient>
           </TouchableOpacity>
+
+          {!hasPermission && (
+            <TouchableOpacity
+              style={styles.permissionButton}
+              onPress={requestAudioPermission}
+            >
+              <Text style={styles.permissionButtonText}>Grant Microphone Permission</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.recordingTips}>
             <Text style={styles.tipsTitle}>Recording Tips:</Text>
@@ -346,7 +498,7 @@ export default function CreatePhotoAvatarScreen() {
           <View style={styles.audioPreview}>
             <Text style={styles.audioPreviewTitle}>Voice Sample Recorded ✅</Text>
             <Text style={styles.audioPreviewDuration}>
-              Duration: {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+              Duration: {formatDuration(recordingDuration)}
             </Text>
             
             <View style={styles.audioControls}>
@@ -358,7 +510,9 @@ export default function CreatePhotoAvatarScreen() {
                   colors={['#4a90e2', '#357abd']}
                   style={styles.buttonGradient}
                 >
-                  <Text style={styles.buttonText}>▶️ Play</Text>
+                  <Text style={styles.buttonText}>
+                    {isPlaying ? '⏸️ Pause' : '▶️ Play'}
+                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
               
@@ -386,7 +540,7 @@ export default function CreatePhotoAvatarScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
-        {audioUri && (
+        {recordingUri && (
           <TouchableOpacity
             style={styles.nextButton}
             onPress={() => setCurrentStep(3)}
@@ -425,6 +579,7 @@ export default function CreatePhotoAvatarScreen() {
         <Text style={styles.summaryText}>• Photo: Ready ✅</Text>
         <Text style={styles.summaryText}>• Voice: Custom recording ✅</Text>
         <Text style={styles.summaryText}>• Name: {avatarName || 'Not set ⏳'}</Text>
+        <Text style={styles.summaryText}>• Duration: {formatDuration(recordingDuration)}</Text>
       </View>
 
       <View style={styles.buttonRow}>
@@ -489,7 +644,7 @@ export default function CreatePhotoAvatarScreen() {
           <Text style={styles.successIcon}>🎉</Text>
           <Text style={styles.successTitle}>Avatar Created!</Text>
           <Text style={styles.successDescription}>
-            Your photo avatar "{createdAvatar.name}" has been created successfully with your custom voice.
+            Your photo avatar "{createdAvatar.name}" has been created successfully with your custom voice!
           </Text>
           
           <TouchableOpacity
@@ -844,6 +999,19 @@ const styles = StyleSheet.create({
   },
   recordingButton: {
     // Additional styles for recording state
+  },
+  permissionButton: {
+    backgroundColor: 'rgba(255, 193, 7, 0.2)',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  permissionButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   recordingTips: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

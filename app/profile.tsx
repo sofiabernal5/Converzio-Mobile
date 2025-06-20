@@ -180,7 +180,7 @@ export default function ProfileScreen() {
     
     try {
       console.log('Saving profile for user ID:', currentUserId);
-      const response = await fetch(`http://localhost:3001/api/user/${currentUserId}/profile`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -4,60 +4,71 @@ export default {
   expo: {
     name: 'Converzio-Mobile',
     slug: 'converzio-mobile',
-    scheme: "converzio",
+    scheme: 'converzio',
     owner: 'sofiabernal',
     version: '1.0.0',
-    orientation: "portrait",
-    platforms: ["ios", "android", "web"],
+    orientation: 'portrait',
+    platforms: ['ios', 'android', 'web'],
     plugins: [
-      "expo-router",
+      'expo-router',
+
+      // FIXED: expo-audio plugin properly formatted as array
       [
-        "expo-image-picker",
+        'expo-audio',
         {
-          photosPermission: "This app uses photos to let you select profile pictures and avatars.",
-          cameraPermission: "This app uses camera to let you take photos for avatars."
+          microphonePermission: "Allow this app to record audio for voice cloning."
         }
       ],
+
+      // expo-image-picker configuration
       [
-        "expo-video",
+        'expo-image-picker',
+        {
+          photosPermission:
+            'This app uses photos to let you select profile pictures and avatars.',
+          cameraPermission:
+            'This app uses camera to let you take photos for avatars.',
+        },
+      ],
+
+      // expo-video plugin configuration
+      [
+        'expo-video',
         {
           supportsBackgroundPlayback: false,
-          supportsPictureInPicture: false
-        }
-      ]
+          supportsPictureInPicture: false,
+        },
+      ],
     ],
-    userInterfaceStyle: "light",
-    assetBundlePatterns: [
-      "**/*"
-    ],
+    userInterfaceStyle: 'light',
+    assetBundlePatterns: ['**/*'],
     ios: {
-      bundleIdentifier: "com.sofiabernal.converzio",
+      bundleIdentifier: 'com.sofiabernal.converzio',
       supportsTablet: true,
-      buildNumber: "1.0.0",
+      buildNumber: '1.0.0',
       infoPlist: {
-        NSCameraUsageDescription: "This app uses camera to take photos for avatars and profile pictures.",
-        NSMicrophoneUsageDescription: "This app uses microphone for video recording features.",
-        NSPhotoLibraryUsageDescription: "This app uses photo library to let you select images for avatars and profile pictures."
-      }
+        NSCameraUsageDescription:
+          'This app uses camera to take photos for avatars and profile pictures.',
+        NSMicrophoneUsageDescription:
+          'This app uses microphone for video recording features.',
+        NSPhotoLibraryUsageDescription:
+          'This app uses photo library to let you select images for avatars and profile pictures.',
+      },
     },
     android: {
-      package: "com.sofiabernal.converzio",
-      adaptiveIcon: {
-        backgroundColor: "#ffffff"
-      },
+      package: 'com.sofiabernal.converzio',
+      adaptiveIcon: { backgroundColor: '#ffffff' },
       permissions: [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "RECORD_AUDIO"
-      ]
+        'CAMERA',
+        'READ_EXTERNAL_STORAGE',
+        'WRITE_EXTERNAL_STORAGE',
+        'RECORD_AUDIO',
+      ],
     },
     extra: {
       HEYGEN_API_KEY: process.env.HEYGEN_API_KEY,
       HEYGEN_API_URL: process.env.HEYGEN_API_URL,
-      eas: {
-        projectId: "62300e2a-15b5-4cde-8ef9-ed2dc2d1bc7b"
-      }
+      eas: { projectId: '62300e2a-15b5-4cde-8ef9-ed2dc2d1bc7b' },
     },
   },
 };

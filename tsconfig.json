@@ -18,7 +18,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "incremental": true,
-    "jsx": "react-native",
+    "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "typeRoots": [
       "./types",
